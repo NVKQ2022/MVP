@@ -1,0 +1,26 @@
+# =============================================================================
+# RAG – direct dependencies only (high maintainability)
+# - Chỉ pin direct deps, transitive để pip tự resolve
+# - Dùng lower-bound đã test + upper-bound < next major để tránh breaking
+# - Để lock reproducible: pip-compile requirements.in -> requirements.txt
+#   hoặc: pip freeze > requirements.lock.txt khi release
+# =============================================================================
+
+# --- Core RAG ---
+chromadb>=0.5,<2            # vector DB, tested 1.5.9
+sentence-transformers>=2.2,<8  # embeddings all-MiniLM-L6-v2, tested 6.0.1 (kéo transformers, torch)
+numpy>=1.24,<3              # tested 2.5.3, <3 tránh breaking NumPy 3.x
+
+# --- Config & LLM ---
+python-dotenv>=1.0,<2       # load .env, tested 1.2.3 (thay thế dotenv cũ)
+openai>=1.30,<4             # Azure OpenAI chat, tested 3.14.1
+
+# --- Server ---
+fastapi>=0.110,<1           # API, tested 0.141.1
+uvicorn[standard]>=0.30,<1  # ASGI, tested 0.53.0; [standard] kéo httptools, uvloop, watchfiles
+
+# Note:
+# - torch, transformers, tokenizers, huggingface-hub là transitive của sentence-transformers
+#   => không pin ở đây, cài riêng torch CPU nếu cần: pip install torch --index-url https://download.pytorch.org/whl/cpu
+# - pydantic, anyio, httpx, h11, etc. là transitive của fastapi/chromadb/openai
+# - Nếu cần lock file cố định: pip-tools -> pip-compile
