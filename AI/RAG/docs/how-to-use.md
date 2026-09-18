@@ -44,6 +44,7 @@ nano .env
 `.env.example`:
 ```ini
 ENDPOINT="https://your-resource.services.ai.azure.com/openai/v1"
+PROVIDER="openai"
 API_KEY="your-api-key-here"
 LLM_MODEL="gpt-5.6-luna"
 EMBEDDING_MODEL="all-MiniLM-L6-v2"

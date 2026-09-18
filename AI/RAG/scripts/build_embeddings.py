@@ -13,6 +13,7 @@ from embedding import EmbeddingService
 from vectordb import VectorDB
 
 
+
 def parse_args():
     p = argparse.ArgumentParser(description="Build Chroma with all-MiniLM")
     p.add_argument("--chunks", type=Path, default=PROJECT_ROOT / "data/chunks/chunks.json")

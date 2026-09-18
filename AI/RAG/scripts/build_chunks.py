@@ -20,19 +20,14 @@ import sys
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# Resolve project root & make `chunking` importable regardless of cwd
+# Resolve project root & make the project imports available regardless of cwd
 # ---------------------------------------------------------------------------
 # scripts/build_chunks.py -> parents[1] == project root (RAG/)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-try:
-    from chunking import chunk_text  # type: ignore
-except ImportError as e:
-    raise ImportError(
-        f"Cannot import chunk_text from chunking.py at {PROJECT_ROOT / 'chunking.py'}: {e}"
-    ) from e
+from main import chunkingService
 
 
 def parse_args() -> argparse.Namespace:
@@ -107,7 +102,7 @@ def main() -> None:
 
     for file_path in txt_files:
         text = file_path.read_text(encoding="utf-8", errors="ignore")
-        chunks = chunk_text(text, chunk_size=args.chunk_size, overlap=args.overlap)
+        chunks = chunkingService.chunk_text(text, chunk_size=args.chunk_size, overlap=args.overlap)
 
         per_file_counts[file_path.name] = len(chunks)
 

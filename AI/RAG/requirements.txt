@@ -8,7 +8,7 @@
 
 # --- Core RAG ---
 chromadb>=0.5,<2            # vector DB, tested 1.5.9
-sentence-transformers>=2.2,<8  # embeddings all-MiniLM-L6-v2, tested 6.0.1 (kéo transformers, torch)
+# sentence-transformers>=2.2,<8  # embeddings all-MiniLM-L6-v2, tested 6.0.1 (kéo transformers, torch)
 numpy>=1.24,<3              # tested 2.5.3, <3 tránh breaking NumPy 3.x
 
 # --- Config & LLM ---
