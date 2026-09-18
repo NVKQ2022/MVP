@@ -1,43 +1,49 @@
-def chunk_text(
-    text: str,
-    chunk_size: int = 300,
-    overlap: int = 30,
-    drop_empty: bool = True,
-) -> list[str]:
-    """
-    Split text into overlapping chunks.
+class ChunkingService:
+    # def __init__(self, chunk_size: int = 300, overlap: int = 30, ):
+    #     self.chunk_size = chunk_size
+    #     self.overlap = overlap
 
-    Args:
-        text: Input text to split.
-        chunk_size: Maximum size of each chunk.
-        overlap: Number of characters shared between consecutive chunks.
-        drop_empty: Whether to ignore empty/whitespace-only chunks.
+    @staticmethod
+    def chunk_text(
+        text: str,
+        chunk_size: int = 300,
+        overlap: int = 30,
+        drop_empty: bool = True,
+    ) -> list[str]:
+        """
+        Split text into overlapping chunks.
 
-    Returns:
-        A list of text chunks.
-    """
-    if chunk_size <= 0:
-        raise ValueError("chunk_size must be greater than 0")
+        Args:
+            text: Input text to split.
+            chunk_size: Maximum size of each chunk.
+            overlap: Number of characters shared between consecutive chunks.
+            drop_empty: Whether to ignore empty/whitespace-only chunks.
 
-    if overlap < 0:
-        raise ValueError("overlap must be >= 0")
+        Returns:
+            A list of text chunks.
+        """
+        if chunk_size <= 0:
+            raise ValueError("chunk_size must be greater than 0")
 
-    if overlap >= chunk_size:
-        raise ValueError("overlap must be smaller than chunk_size")
+        if overlap < 0:
+            raise ValueError("overlap must be >= 0")
 
-    if drop_empty and not text.strip():
-        return []
+        if overlap >= chunk_size:
+            raise ValueError("overlap must be smaller than chunk_size")
 
-    step = chunk_size - overlap
-    chunks = []
+        if drop_empty and not text.strip():
+            return []
 
-    for start in range(0, len(text), step):
-        chunk = text[start:start + chunk_size]
+        step = chunk_size - overlap
+        chunks = []
 
-        if not drop_empty or chunk.strip():
-            chunks.append(chunk)
+        for start in range(0, len(text), step):
+            chunk = text[start:start + chunk_size]
 
-        if start + chunk_size >= len(text):
-            break
+            if not drop_empty or chunk.strip():
+                chunks.append(chunk)
 
-    return chunks
+            if start + chunk_size >= len(text):
+                break
+
+        return chunks
