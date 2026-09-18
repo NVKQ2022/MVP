@@ -1,0 +1,150 @@
+/* Counter.css */
+
+.counter {
+    flex: 1;
+    min-height: 0;
+    padding: 40px 20px;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+    /* =========================
+   LIGHT THEME
+   ========================= */
+
+    .counter.light {
+        background-color: #f4f4f5;
+        color: #18181b;
+    }
+
+    /* =========================
+   DARK THEME
+   ========================= */
+
+    .counter.dark {
+        background-color: #18181b;
+        color: #f4f4f5;
+    }
+
+
+    /* =========================
+   COUNTER
+   ========================= */
+
+    .counter h1 {
+        text-align: center;
+        font-size: 48px;
+        margin-bottom: 30px;
+    }
+
+
+    /* =========================
+   BUTTONS
+   ========================= */
+
+    .counter button {
+        border: none;
+        border-radius: 8px;
+        padding: 10px 18px;
+        margin: 5px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+        .counter button:hover {
+            transform: translateY(-2px);
+        }
+
+        .counter button:active {
+            transform: translateY(0);
+        }
+
+
+    /* Light buttons */
+
+    .counter.light button {
+        background-color: #27272a;
+        color: white;
+    }
+
+        .counter.light button:hover {
+            background-color: #3f3f46;
+        }
+
+
+    /* Dark buttons */
+
+    .counter.dark button {
+        background-color: #e4e4e7;
+        color: #18181b;
+    }
+
+        .counter.dark button:hover {
+            background-color: #d4d4d8;
+        }
+
+
+    /* =========================
+   INPUT
+   ========================= */
+
+    .counter input {
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 2px solid;
+        font-size: 16px;
+        outline: none;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+
+    /* Light input */
+
+    .counter.light input {
+        background-color: white;
+        color: #18181b;
+        border-color: #d4d4d8;
+    }
+
+        .counter.light input:focus {
+            border-color: #6366f1;
+        }
+
+
+    /* Dark input */
+
+    .counter.dark input {
+        background-color: #27272a;
+        color: #f4f4f5;
+        border-color: #52525b;
+    }
+
+        .counter.dark input:focus {
+            border-color: #818cf8;
+        }
+
+
+    /* =========================
+   RENDER INFO
+   ========================= */
+
+    .counter p {
+        font-size: 16px;
+        margin: 8px 0;
+    }
+
+    .counter.light p {
+        color: #52525b;
+    }
+
+    .counter.dark p {
+        color: #a1a1aa;
+    }
+

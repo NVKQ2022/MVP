@@ -1,0 +1,14 @@
+.render-info {
+    max-width: 500px;
+    margin: 30px auto 0;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.counter.light .render-info {
+    background-color: #e4e4e7;
+}
+
+.counter.dark .render-info {
+    background-color: #27272a;
+}
