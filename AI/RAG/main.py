@@ -18,7 +18,11 @@ def build_runtime():
     )
 
     if PROVIDER == "openai":
-        provider = OpenAIEmbedding(model_name=EMBEDDING_MODEL, api_key=API_KEY)
+        provider = OpenAIEmbedding(
+            model_name=EMBEDDING_MODEL,
+            base_url=ENDPOINT,
+            api_key=API_KEY,
+        )
     else:
         provider = HFEmbedding(model_name=EMBEDDING_MODEL)
 
