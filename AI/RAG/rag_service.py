@@ -1,91 +1,144 @@
+
+from typing import Any
+
 from config import MODEL_NAME
+from chunking import ChunkingService
 from embedding import EmbeddingService
 from vectordb import VectorDB
 
 
 class RAGService:
-    """Simple RAG Service that retrieves context from VectorDB and generates answers via LLM."""
+    """RAG service for document ingestion, retrieval, and generation."""
 
     def __init__(
         self,
-        client=None,
-        embedding_service: EmbeddingService | None = None,
-        vector_db: VectorDB | None = None,
+        client,
+        chunking_service: ChunkingService,
+        embedding_service: EmbeddingService,
+        vector_db: VectorDB,
         model_name: str = MODEL_NAME,
     ):
-        # If any dependency is missing, load them from main.py runtime
-        if client is None or embedding_service is None or vector_db is None:
-            from main import build_runtime
-
-            c, e, v = build_runtime()
-            client = client or c
-            embedding_service = embedding_service or e
-            vector_db = vector_db or v
-
         self.client = client
+        self.chunking_service = chunking_service
         self.embedding_service = embedding_service
         self.vector_db = vector_db
         self.model_name = model_name
 
-    def retrieve(self, query: str, top_k: int = 5):
+    def ingest(
+        self,
+        text: str,
+        source: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Chunk, embed, and store a document in the vector database.
+
+        Args:
+            text: Document text to ingest.
+            source: Original document source/path/name.
+            metadata: Optional metadata attached to every chunk.
+
+        Returns:
+            The documents that were added to the vector database.
+        """
+        if not text.strip():
+            return []
+
+        chunks = self.chunking_service.chunk(text)
+
+        if not chunks:
+            return []
+
+        vectors = self.embedding_service.embed_batch(chunks)
+
+        documents = []
+
+        for chunk_id, chunk in enumerate(chunks):
+            document = {
+                "text": chunk,
+                "source": source,
+                "chunk_id": chunk_id,
+            }
+
+            if metadata:
+                document.update(metadata)
+
+            documents.append(document)
+
+        self.vector_db.add_documents(
+            vectors=vectors,
+            documents=documents,
+        )
+
+        return documents
+
+    def retrieve(
+        self,
+        query: str,
+        top_k: int = 5,
+    ) -> list[dict[str, Any]]:
         """Find the top-k most relevant chunks for a query."""
         query_vector = self.embedding_service.embed_text(query)
-        return self.vector_db.search(query_vector, top_k=top_k)
 
-    def format_context(self, search_results):
+        return self.vector_db.search(
+            query_vector,
+            top_k=top_k,
+        )
+
+    def format_context(
+        self,
+        search_results: list[dict[str, Any]],
+    ) -> str:
         """Format search results into a clean context string."""
         blocks = []
-        for r in search_results:
-            doc = r.get("document", {})
-            source = doc.get("source", "unknown")
-            chunk_id = doc.get("chunk_id", "")
-            text = doc.get("text", "")
-            blocks.append(f"Source: {source}#{chunk_id}\n{text}")
+
+        for result in search_results:
+            document = result.get("document", {})
+
+            source = document.get("source", "unknown")
+            chunk_id = document.get("chunk_id", "")
+            text = document.get("text", "")
+
+            blocks.append(
+                f"Source: {source}#{chunk_id}\n{text}"
+            )
+
         return "\n\n---\n\n".join(blocks)
 
-    def query(self, question: str, top_k: int = 5):
+    def query(
+        self,
+        question: str,
+        top_k: int = 5,
+    ) -> dict[str, Any]:
         """Perform end-to-end RAG: retrieve context and generate an answer."""
-        results = self.retrieve(question, top_k=top_k)
+        results = self.retrieve(
+            question,
+            top_k=top_k,
+        )
+
         context = self.format_context(results)
 
         prompt = (
-            f"Use the following context to answer the question. "
-            f"If not in the context, say you don't know.\n\n"
+            "Use the following context to answer the question. "
+            "If the answer is not in the context, say you don't know.\n\n"
             f"Context:\n{context}\n\n"
-            f"Question: {question}\nAnswer:"
+            f"Question: {question}\n"
+            "Answer:"
         )
 
-        # Generate response using client (supports responses.create and chat.completions)
-        if hasattr(self.client, "responses"):
-            resp = self.client.responses.create(
-                model=self.model_name,
-                input=prompt,
-            )
-            answer = getattr(resp, "output_text", None)
-            if not answer and hasattr(resp, "output") and resp.output:
-                item = resp.output[0]
-                answer = item.content[0].text if hasattr(item, "content") else str(item)
-        else:
-            resp = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant that answers using provided context."},
-                    {"role": "user", "content": prompt},
-                ],
-            )
-            answer = resp.choices[0].message.content
+        response = self.client.responses.create(
+            model=self.model_name,
+            input=prompt,
+        )
+
+        answer = response.output_text
 
         return {
             "question": question,
             "answer": answer,
             "context": context,
-            "sources": [r.get("document", {}) for r in results],
+            "sources": [
+                result.get("document", {})
+                for result in results
+            ],
         }
-
-
-if __name__ == "__main__":
-    # Quick test when running python rag_service.py directly
-    rag = RAGService()
-    print("RAGService initialized successfully with dependencies from main.py!")
-    print(f"Model: {rag.model_name}")
-    print(f"Vector collection count: {rag.vector_db.count()}")
