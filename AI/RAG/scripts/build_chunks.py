@@ -10,7 +10,7 @@ Output:
 
 Usage:
   python scripts/build_chunks.py
-  python scripts/build_chunks.py --chunk-size 500 --overlap 50
+  python scripts/build_chunks.py --chunk-size 550 --overlap 50
   python scripts/build_chunks.py --per-file
   python -m scripts.build_chunks --help
 """
@@ -51,8 +51,8 @@ def parse_args() -> argparse.Namespace:
         help="Combined JSON filename (default: <output-dir>/chunks.json). "
         "If relative, resolved against --output-dir.",
     )
-    p.add_argument("--chunk-size", type=int, default=300, help="chunk_size for chunk_text (default: 300)")
-    p.add_argument("--overlap", type=int, default=30, help="overlap for chunk_text (default: 30)")
+    p.add_argument("--chunk-size", type=int, default=550, help="chunk_size for chunk_text (default: 300)")
+    p.add_argument("--overlap", type=int, default=35, help="overlap for chunk_text (default: 30)")
     p.add_argument(
         "--per-file",
         action="store_true",
