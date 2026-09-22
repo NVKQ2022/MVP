@@ -1,0 +1,17 @@
+@use '@/styles/mixins' as *;
+
+.studentLayout {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+
+  &__main {
+    flex: 1;
+  }
+
+  &__container {
+    max-width: 72rem;
+    margin-inline: auto;
+    padding: 2rem 1rem;
+  }
+}

@@ -1,0 +1,22 @@
+@layer components {
+  .announcement-form {
+    width: 100%;
+  }
+
+  .announcement-form__grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .announcement-form__grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .announcement-form__details-textarea {
+    min-height: 160px;
+    resize: none;
+  }
+}

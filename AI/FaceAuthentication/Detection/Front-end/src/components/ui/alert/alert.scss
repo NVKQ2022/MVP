@@ -1,0 +1,28 @@
+.alert {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+
+  &--default {
+    background: var(--background);
+    color: var(--foreground);
+  }
+  &--destructive {
+    border-color: color-mix(in oklch, var(--destructive) 50%, transparent);
+    color: var(--destructive);
+  }
+
+  &__title {
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  &__description {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+}

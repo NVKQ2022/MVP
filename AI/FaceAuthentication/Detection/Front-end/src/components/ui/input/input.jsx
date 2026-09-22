@@ -1,0 +1,10 @@
+import * as React from 'react';
+import { cn } from '@/utils/cn';
+import './input.scss';
+
+const Input = React.forwardRef(({ className, type, ...props }, ref) => (
+  <input type={type} className={cn('input', className)} ref={ref} {...props} />
+));
+Input.displayName = 'Input';
+
+export { Input };

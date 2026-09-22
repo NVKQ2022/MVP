@@ -1,0 +1,98 @@
+export const announcementsData = [
+  {
+    id: 'ann-001',
+    title: 'Final exam schedule for Fall Semester 2026-2027',
+    category: 'Exam',
+    author: 'Academic Affairs Office',
+    postedDate: '2026-09-10',
+    priority: 'high',
+    status: 'published',
+    viewed: true,
+    details:
+      'The final exam schedule for Fall Semester 2026-2027 has been published. Students should check their exam room and seat number on the student portal. Bring your student ID card to the exam room; no ID, no entry.',
+  },
+  {
+    id: 'ann-002',
+    title: 'Supplementary course registration notice',
+    category: 'Registration',
+    author: 'Academic Affairs Office',
+    postedDate: '2026-09-12',
+    priority: 'medium',
+    status: 'published',
+    viewed: false,
+    details:
+      'Supplementary course registration opens from September 15 to September 20. Students who wish to add or drop courses must submit their request through the registration system before the deadline. Late requests will not be processed.',
+  },
+  {
+    id: 'ann-003',
+    title: 'Academic merit scholarship — Fall semester',
+    category: 'Scholarship',
+    author: 'Student Affairs Office',
+    postedDate: '2026-09-14',
+    priority: 'medium',
+    status: 'published',
+    viewed: false,
+    details:
+      'Applications for the Fall semester academic merit scholarship are now open. Eligible students must have a GPA of 3.2 or higher with no disciplinary record. Submit your application along with supporting documents to the Student Affairs Office by October 1.',
+  },
+  {
+    id: 'ann-004',
+    title: 'Student portal system maintenance',
+    category: 'System',
+    author: 'IT Center',
+    postedDate: '2026-09-15',
+    priority: 'low',
+    status: 'draft',
+    viewed: false,
+    details:
+      'The student portal will undergo scheduled maintenance this weekend from 11:00 PM Saturday to 5:00 AM Sunday. During this window, login, course registration, and grade lookup services will be unavailable.',
+  },
+  {
+    id: 'ann-005',
+    title: 'Career orientation workshop for IT students',
+    category: 'Event',
+    author: 'Faculty of Information Technology',
+    postedDate: '2026-09-17',
+    priority: 'low',
+    status: 'published',
+    viewed: true,
+    details:
+      'The Faculty of Information Technology is hosting a career orientation workshop featuring guest speakers from leading tech companies. The event covers resume building, interview tips, and an overview of current industry trends.',
+  },
+  {
+    id: 'ann-006',
+    title: 'Tuition payment reminder — Fall semester',
+    category: 'Finance',
+    author: 'Finance & Planning Office',
+    postedDate: '2026-09-18',
+    priority: 'high',
+    status: 'published',
+    viewed: false,
+    details:
+      'This is a reminder that Fall semester tuition payment is due by September 30. Students who fail to complete payment by the deadline may have their course registration cancelled. Payment can be made online or at the finance office counter.',
+  },
+  {
+    id: 'ann-007',
+    title: 'National Day holiday notice',
+    category: 'General',
+    author: 'Administrative Office',
+    postedDate: '2026-08-28',
+    priority: 'low',
+    status: 'archived',
+    viewed: true,
+    details:
+      'The university will be closed in observance of National Day. All classes and administrative services will resume on the next business day. Enjoy the holiday!',
+  },
+  {
+    id: 'ann-008',
+    title: 'Credit-based training regulations update',
+    category: 'Academic',
+    author: 'Academic Affairs Office',
+    postedDate: '2026-09-19',
+    priority: 'medium',
+    status: 'draft',
+    viewed: false,
+    details:
+      'The credit-based training regulations have been updated to reflect new graduation requirements effective this academic year. Students are advised to review the updated regulations document available on the academic affairs page.',
+  },
+];

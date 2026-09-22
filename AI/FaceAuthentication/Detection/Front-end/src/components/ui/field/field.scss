@@ -1,0 +1,127 @@
+.field-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 1.75rem;
+
+  // Equivalent to:
+  // data-[slot=checkbox-group]:gap-3
+  &[data-slot='checkbox-group'] {
+    gap: 0.75rem;
+  }
+
+  // Equivalent to:
+  // [&>[data-slot=field-group]]:gap-4
+  > [data-slot='field-group'] {
+    gap: 1rem;
+  }
+}
+
+.field {
+  display: flex;
+  width: 100%;
+  gap: 0.75rem;
+
+  // Equivalent to:
+  // data-[invalid=true]:text-destructive
+  &[data-invalid='true'] {
+    color: var(--destructive);
+  }
+
+  &--vertical {
+    flex-direction: column;
+
+    // Equivalent to:
+    // [&>*]:w-full
+    > * {
+      width: 100%;
+    }
+
+    // Equivalent to:
+    // [&>.sr-only]:w-auto
+    > .sr-only {
+      width: auto;
+    }
+  }
+
+  &--horizontal {
+    flex-direction: row;
+    align-items: center;
+
+    // Equivalent to:
+    // [&>[data-slot=field-label]]:flex-auto
+    > [data-slot='field-label'] {
+      flex: 1 1 auto;
+    }
+
+    // Equivalent to:
+    // has-[>[data-slot=field-content]]:items-start
+    &:has(> [data-slot='field-content']) {
+      align-items: flex-start;
+
+      // Equivalent to:
+      // has-[>[data-slot=field-content]]:
+      // [&>[role=checkbox],&>[role=radio]]:mt-px
+      > [role='checkbox'],
+      > [role='radio'] {
+        margin-top: 1px;
+      }
+    }
+  }
+}
+
+.field-label {
+  display: flex;
+  width: fit-content;
+  gap: 0.5rem;
+  line-height: 1.375;
+
+  // Equivalent to:
+  // group-data-[disabled=true]/field:opacity-50
+  &[data-disabled='true'] {
+    opacity: 0.5;
+  }
+
+  // When Field has horizontal orientation
+  .field[data-orientation='horizontal'] & {
+    align-items: center;
+  }
+}
+
+.field-description {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 400;
+
+  &:last-child {
+    margin-top: 0;
+  }
+
+  // Equivalent to:
+  // group-has-[[data-orientation=horizontal]]/field:text-balance
+  .field:has([data-orientation='horizontal']) & {
+    text-wrap: balance;
+  }
+}
+
+.field-error {
+  color: var(--destructive);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 400;
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 1rem;
+
+    padding: 0;
+
+    list-style-type: disc;
+  }
+}

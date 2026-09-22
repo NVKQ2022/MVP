@@ -1,0 +1,15 @@
+@use './mixins' as *;
+
+.visually-hidden {
+  @include visually-hidden;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scroll-x-container {
+  @include horizontal-scroll;
+}
