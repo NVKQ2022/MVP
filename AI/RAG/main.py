@@ -29,8 +29,8 @@ def build_llm_client() -> OpenAI:
 
 def build_chunking_service() -> ChunkingService:
     return FixedSizeChunkingService(
-        chunk_size=300,
-        overlap=30,
+        chunk_size=550,
+        overlap=35,
         drop_empty=True,
     )
 
