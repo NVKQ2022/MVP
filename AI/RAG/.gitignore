@@ -51,21 +51,22 @@ cython_debug/
 *.ipynb_checkpoints
 
 # ── Vector DB & Embeddings ─────────────────────────────────────────
-chroma_db/
-chroma.sqlite3
-*.sqlite3
-*.db
-lancedb/
-faiss_index/
-qdrant_storage/
+# allow push database ( for small storage only)
+# chroma_db/
+# chroma.sqlite3
+# *.sqlite3
+# *.db
+# lancedb/
+# faiss_index/
+# qdrant_storage/
 
 # Sentence-Transformers / HuggingFace cache (if ever stored locally)
 .cache/
 sentence_transformers_cache/
 
 # ── Data (generated) ───────────────────────────────────────────────
-# Raw RFC docs are committed (small text files) — ignore generated chunks
-data/chunks/
+# Raw RFC docs are committed (small text files) — ignore generated chunks ( allow for now)
+#data/chunks/
 # Uncomment if you don't want to version raw docs either:
 # data/docs/
 
