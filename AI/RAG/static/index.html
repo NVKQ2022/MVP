@@ -1,157 +1,336 @@
-<!doctype html>
-<html lang="vi">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RAG – RFC Search</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RFC RAG Search</title>
+
 <style>
-  :root{--bg:#0f1115;--card:#1a1d24;--border:#2a2e38;--text:#e6e8ee;--muted:#9aa0b2;--accent:#6ea8fe;--accent2:#7ee787;--radius:12px}
-  *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
-  header{max-width:1000px;margin:24px auto 0;padding:0 20px;display:flex;gap:16px;align-items:center;justify-content:space-between}
-  header h1{margin:0;font-size:22px;letter-spacing:.2px} header h1 span{color:var(--accent)}
-  .badge{font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);background:var(--card)}
-  .badge.ok{color:var(--accent2);border-color:#2d4a32}
-  .wrap{max-width:1000px;margin:16px auto;padding:0 20px 40px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
-  .row{display:flex;gap:12px;flex-wrap:wrap}
-  .row input[type=text]{flex:1;min-width:260px;background:#0f1115;border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:10px;font-size:15px;outline:none}
-  .row input[type=text]:focus{border-color:var(--accent)}
-  select,button{border:1px solid var(--border);background:#0f1115;color:var(--text);padding:11px 14px;border-radius:10px;font-size:14px;cursor:pointer}
-  button.primary{background:var(--accent);color:#0b1020;border-color:transparent;font-weight:600}
-  button.primary:disabled{opacity:.6;cursor:not-allowed}
-  button.ghost:hover{border-color:var(--accent)}
-  .hints{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
-  .hints button{font-size:12px;padding:6px 10px;color:var(--muted)}
-  .meta{color:var(--muted);font-size:12px;margin:8px 0 0}
-  .grid{margin-top:16px;display:grid;gap:12px}
-  .result{padding:14px;border:1px solid var(--border);border-radius:10px;background:#14171e}
-  .result .head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
-  .pill{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
-  .pill.score{color:var(--accent2);border-color:#2d4a32}
-  .text{white-space:pre-wrap;font-size:13px;color:#d6d9e2;max-height:240px;overflow:auto;background:#0f1115;border:1px solid #1f2330;border-radius:8px;padding:10px}
-  .answer{white-space:pre-wrap;font-size:14px;line-height:1.6}
-  .answer-card{border-left:3px solid var(--accent)}
-  .sources{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
-  .empty{color:var(--muted);text-align:center;padding:24px}
-  footer{max-width:1000px;margin:0 auto;padding:12px 20px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between}
-  @media(max-width:600px){header{flex-direction:column;align-items:flex-start}}
+body{
+    font-family:Segoe UI,sans-serif;
+    max-width:1200px;
+    margin:auto;
+    padding:20px;
+    background:#10141a;
+    color:#eee;
+}
+
+h1{
+    color:#66b3ff;
+}
+
+.card{
+    background:#1b212b;
+    border:1px solid #2f3745;
+    border-radius:10px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+input,select,button{
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #444;
+    background:#0f1319;
+    color:white;
+}
+
+button{
+    cursor:pointer;
+}
+
+button:hover{
+    background:#263040;
+}
+
+.result{
+    padding:15px;
+    margin-bottom:10px;
+    border-radius:8px;
+    border:1px solid #333;
+    background:#151a22;
+}
+
+.answer{
+    white-space:pre-wrap;
+    line-height:1.6;
+}
+
+.chunk{
+    white-space:pre-wrap;
+    font-size:14px;
+    margin-top:10px;
+}
+
+.badge{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:12px;
+    background:#2d3645;
+    margin-right:6px;
+    font-size:12px;
+}
+
+.green{
+    background:#26452f;
+}
+
+.red{
+    background:#572727;
+}
+
+.meta{
+    color:#aaa;
+    margin-top:10px;
+}
+
+#answerSection{
+    margin-top:20px;
+}
+
+.hidden{
+    display:none;
+}
 </style>
 </head>
+
 <body>
-<header>
-  <h1>RAG <span>· RFC Docs</span> <small style="font-weight:400;color:var(--muted)">all-MiniLM + Chroma</small></h1>
-  <div id="health" class="badge">checking…</div>
-</header>
 
-<div class="wrap">
-  <div class="card">
-    <div class="row">
-      <input id="q" type="text" placeholder="Nhập câu hỏi, ví dụ: QUIC handshake là gì?" value="What is DNS?" />
-      <select id="topk" title="top_k">
-        <option value="3">top 3</option>
-        <option value="5" selected>top 5</option>
-        <option value="8">top 8</option>
-        <option value="10">top 10</option>
-      </select>
-      <button id="btnSearch" class="ghost">Tìm kiếm</button>
-      <button id="btnRag" class="primary">Hỏi RAG</button>
-    </div>
-    <div class="hints">
-      <button data-q="What is DNS according to RFC 1035?">DNS RFC1035</button>
-      <button data-q="Explain QUIC handshake">QUIC handshake</button>
-      <button data-q="How does OAuth 2.0 authorization code flow work?">OAuth flow</button>
-      <button data-q="What is TLS 1.3 handshake in RFC 8446?">TLS 1.3</button>
-      <button data-q="Explain HTTP/1.1 status codes">HTTP status</button>
-    </div>
-    <div id="meta" class="meta"></div>
-  </div>
+<h1>RFC RAG Search</h1>
 
-  <div id="answerWrap" class="grid" style="margin-top:14px;display:none"></div>
-  <div id="results" class="grid"></div>
+<div class="card">
+
+    <input
+        id="query"
+        style="width:55%"
+        value="What is DNS?"
+        placeholder="Ask a question..."
+    >
+
+    <select id="topk">
+        <option value="3">Top 3</option>
+        <option value="5" selected>Top 5</option>
+        <option value="10">Top 10</option>
+    </select>
+
+    <button onclick="searchDocs()">
+        Search
+    </button>
+
+    <button onclick="askRag()">
+        Ask RAG
+    </button>
+
 </div>
 
-<footer>
-  <span>Server: <code id="srvInfo">-</code></span>
-  <span><a href="/docs" style="color:var(--muted)">API Docs</a> · <a href="/health" style="color:var(--muted)">/health</a></span>
-</footer>
+<div class="card">
+    <strong>Health</strong>
+    <div id="health">
+        Loading...
+    </div>
+</div>
+
+<div id="answerSection" class="hidden card"></div>
+
+<div id="results"></div>
 
 <script>
-const $ = s => document.querySelector(s);
-const qInput = $('#q'), topkEl = $('#topk'), metaEl = $('#meta'), resultsEl = $('#results'), answerWrap = $('#answerWrap');
-const btnSearch = $('#btnSearch'), btnRag = $('#btnRag'), healthEl = $('#health'), srvInfo = $('#srvInfo');
 
-async function checkHealth(){
-  try{
-    const r = await fetch('/health'); const j = await r.json();
-    healthEl.textContent = `✓ ${j.chroma_count} chunks · ${j.embedding_model} · ${j.llm_model||'no LLM'}`;
-    healthEl.className='badge ok';
-    srvInfo.textContent = `${j.chroma_collection}@${j.chroma_count} + ${j.embedding_model}`;
-  }catch(e){
-    healthEl.textContent='✗ offline'; healthEl.className='badge';
-  }
-}
-checkHealth();
+const healthEl = document.getElementById("health");
+const resultsEl = document.getElementById("results");
+const answerEl = document.getElementById("answerSection");
 
-function setLoading(isLoading){
-  btnSearch.disabled = isLoading; btnRag.disabled = isLoading;
-  btnSearch.textContent = isLoading ? '...' : 'Tìm kiếm';
-  btnRag.textContent = isLoading ? '...' : 'Hỏi RAG';
+function safeNumber(value){
+    if(value === undefined || value === null){
+        return "N/A";
+    }
+    return Number(value).toFixed(3);
 }
 
-function renderResults(data, isRag=false){
-  metaEl.textContent = `${isRag?'RAG':'Search'} · "${data.query}" · ${data.took_ms}ms · top_k ${data.top_k}`;
-  resultsEl.innerHTML = '';
-  answerWrap.style.display='none'; answerWrap.innerHTML='';
-  if(isRag && data.answer){
-    answerWrap.style.display='grid';
-    answerWrap.innerHTML = `
-      <div class="result answer-card">
-        <div class="head"><span class="pill score">answer</span><span class="pill">${data.took_ms}ms</span></div>
-        <div class="answer">${escapeHtml(data.answer)}</div>
-        <div class="sources">${(data.sources||[]).map(s=>`<span class="pill">${s.source}#${s.chunk_id} · ${s.score.toFixed(3)}</span>`).join('')}</div>
-      </div>`;
-  }
-  if(isRag && data.error){
-    answerWrap.style.display='grid';
-    answerWrap.innerHTML = `<div class="result"><div class="pill">context only (LLM chưa cấu hình)</div><div class="text">${escapeHtml(data.context||'').slice(0,4000)}</div></div>`;
-  }
-  const list = data.results || [];
-  if(!list.length){
-    resultsEl.innerHTML = `<div class="empty">Không có kết quả</div>`;
-    return;
-  }
-  resultsEl.innerHTML = list.map(r=>`
-    <div class="result">
-      <div class="head">
-        <span class="pill score">score ${r.score.toFixed(3)}</span>
-        <span class="pill">${r.source} #${r.chunk_id}</span>
-        <span class="pill">distance ${r.distance.toFixed(3)}</span>
-      </div>
-      <div class="text">${escapeHtml(r.text)}</div>
-    </div>
-  `).join('');
+function escapeHtml(text){
+    return (text || "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
 }
-function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) }
 
-async function doSearch(){
-  const q = qInput.value.trim(); if(!q) return;
-  setLoading(true);
-  try{
-    const r = await fetch('/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q, top_k: parseInt(topkEl.value)})});
-    const j = await r.json(); renderResults(j,false);
-  }catch(e){ metaEl.textContent='Lỗi: '+e.message } finally{ setLoading(false) }
+async function loadHealth(){
+
+    try{
+        const res = await fetch("/health");
+        const data = await res.json();
+
+        healthEl.innerHTML = `
+            <div>
+                <span class="badge green">
+                    ${data.status}
+                </span>
+
+                Collection:
+                <strong>${data.vector_collection}</strong>
+
+                | Chunks:
+                <strong>${data.vector_count}</strong>
+
+                | Embedding Dim:
+                <strong>${data.embedding_dim}</strong>
+
+                | LLM:
+                <strong>
+                    ${data.llm_available
+                        ? data.llm_model
+                        : "Disabled"}
+                </strong>
+            </div>
+        `;
+    }
+    catch(err){
+        healthEl.innerHTML =
+            `<span class="badge red">offline</span>`;
+    }
 }
-async function doRag(){
-  const q = qInput.value.trim(); if(!q) return;
-  setLoading(true);
-  try{
-    const r = await fetch('/rag',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q, top_k: parseInt(topkEl.value)})});
-    const j = await r.json(); renderResults(j,true);
-  }catch(e){ metaEl.textContent='Lỗi: '+e.message } finally{ setLoading(false) }
+
+function renderSearch(data){
+
+    answerEl.classList.add("hidden");
+
+    resultsEl.innerHTML =
+        `<div class="meta">
+            Query: ${data.query}
+            |
+            ${data.took_ms} ms
+            |
+            Top K: ${data.top_k}
+        </div>`;
+
+    for(const item of data.results){
+
+        resultsEl.innerHTML += `
+            <div class="result">
+
+                <span class="badge">
+                    score ${safeNumber(item.score)}
+                </span>
+
+                <span class="badge">
+                    distance ${safeNumber(item.distance)}
+                </span>
+
+                <span class="badge">
+                    ${item.source} #${item.chunk_id}
+                </span>
+
+                <div class="chunk">
+                    ${escapeHtml(item.text)}
+                </div>
+
+            </div>
+        `;
+    }
 }
-btnSearch.onclick=doSearch; btnRag.onclick=doRag;
-qInput.addEventListener('keydown', e=>{ if(e.key==='Enter') doRag(); });
-document.querySelectorAll('.hints button').forEach(b=> b.onclick=()=>{ qInput.value=b.dataset.q; doRag(); });
+
+function renderRag(data){
+
+    answerEl.classList.remove("hidden");
+
+    if(data.error){
+
+        answerEl.innerHTML = `
+            <h3>Context Only</h3>
+            <p>${data.error}</p>
+
+            <pre>${escapeHtml(data.context)}</pre>
+        `;
+    }
+    else{
+
+        answerEl.innerHTML = `
+            <h3>Answer</h3>
+
+            <div class="answer">
+                ${escapeHtml(data.answer)}
+            </div>
+        `;
+    }
+
+    resultsEl.innerHTML = "";
+
+    if(data.sources){
+
+        for(const source of data.sources){
+
+            resultsEl.innerHTML += `
+                <div class="result">
+
+                    <span class="badge">
+                        ${source.source}
+                    </span>
+
+                    <span class="badge">
+                        Chunk ${source.chunk_id}
+                    </span>
+
+                    <span class="badge">
+                        Score ${safeNumber(source.score)}
+                    </span>
+
+                </div>
+            `;
+        }
+    }
+}
+
+async function searchDocs(){
+
+    const query =
+        document.getElementById("query").value;
+
+    const top_k =
+        Number(document.getElementById("topk").value);
+
+    const res = await fetch("/query",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            query,
+            top_k
+        })
+    });
+
+    const data = await res.json();
+
+    renderSearch(data);
+}
+
+async function askRag(){
+
+    const query =
+        document.getElementById("query").value;
+
+    const top_k =
+        Number(document.getElementById("topk").value);
+
+    const res = await fetch("/rag",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            query,
+            top_k
+        })
+    });
+
+    const data = await res.json();
+
+    renderRag(data);
+}
+
+loadHealth();
+
 </script>
+
 </body>
 </html>
