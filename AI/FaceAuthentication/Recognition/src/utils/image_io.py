@@ -8,7 +8,7 @@ from typing import List, Optional, Tuple, Union
 import cv2
 import numpy as np
 
-from src.detection.blazeface_detector import FaceDetection
+from src.schemas.response_schemas import FaceDetectionDTO
 
 SUPPORTED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
@@ -55,7 +55,7 @@ def save_image(save_path: Union[str, Path], image: np.ndarray) -> Path:
 
 def draw_detection(
     image: np.ndarray,
-    detection: FaceDetection,
+    detection: FaceDetectionDTO,
     color: Tuple[int, int, int] = (0, 255, 0),
     landmark_color: Tuple[int, int, int] = (0, 0, 255),
     thickness: int = 2,
@@ -64,13 +64,17 @@ def draw_detection(
     Draws bounding box, confidence score, and landmark keypoints on an image copy.
     """
     annotated = image.copy()
-    xmin, ymin, w, h = detection.bbox
+    bbox = detection.bbox
+    xmin = bbox.origin_x
+    ymin = bbox.origin_y
+    w = bbox.width
+    h = bbox.height
 
     # Bounding box
     cv2.rectangle(annotated, (xmin, ymin), (xmin + w, ymin + h), color, thickness)
 
     # Score label
-    label = f"{detection.score:.2f}"
+    label = f"{detection.confidence:.2f}"
     cv2.putText(
         annotated,
         label,
@@ -84,6 +88,6 @@ def draw_detection(
 
     # Keypoints
     for kp in detection.keypoints:
-        cv2.circle(annotated, (int(kp[0]), int(kp[1])), 4, landmark_color, -1)
+        cv2.circle(annotated, (int(kp.x), int(kp.y)), 4, landmark_color, -1)
 
     return annotated
