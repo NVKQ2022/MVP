@@ -1,150 +1,196 @@
-# Face Detection & ArcFace Feature Embedding Pipeline
+# Hierarchical Face Recognition & Authentication Services
 
-A clean, modular, and high-performance Python framework for Face Detection, Landmark-guided Face Cropping/Alignment, ArcFace Preprocessing, and 512-Dimensional Deep Feature Embedding Inference.
+A production-grade Face Detection and Recognition framework built with a **Hierarchical Service Class Architecture**, **Factory Design Pattern**, and **FastAPI REST Endpoints**. Models and preprocessing strategies are swappable via configuration without modifying application logic.
 
 ---
 
-## 📁 Project Architecture & Directory Layout
+## 🏛️ Hierarchical Service Architecture
 
-The project is cleanly split into decoupled modules:
+```mermaid
+classDiagram
+    %% Base Interfaces
+    class BaseFaceDetectionService {
+        <<abstract>>
+        +detect(image_input) List~FaceDetectionDTO~*
+        +detect_best(image_input) FaceDetectionDTO
+        +model_name str*
+        +close()
+    }
+    class BaseFacePreprocessingService {
+        <<abstract>>
+        +align_and_crop(image_bgr, detection) ndarray*
+        +normalize_tensor(face_bgr) ndarray*
+        +normalize_batch(faces_bgr) ndarray
+        +target_size tuple*
+    }
+    class BaseFaceEmbeddingService {
+        <<abstract>>
+        +extract(tensor, normalize) ndarray*
+        +extract_batch(batch_tensor, normalize) ndarray*
+        +cosine_similarity(emb1, emb2) float
+        +embedding_dim int*
+        +model_name str*
+        +close()
+    }
+
+    %% Concrete Detection Services
+    class BlazeFaceDetectionService {
+        +detect(image_input) List~FaceDetectionDTO~
+        +model_name "MediaPipe BlazeFace Short-Range"
+    }
+    BaseFaceDetectionService <|-- BlazeFaceDetectionService
+
+    %% Concrete Preprocessing Services
+    class CanonicalLandmarkPreprocessingService {
+        +align_and_crop(image_bgr, detection) ndarray
+        +normalize_tensor(face_bgr) ndarray
+    }
+    class BBoxCropPreprocessingService {
+        +align_and_crop(image_bgr, detection) ndarray
+        +normalize_tensor(face_bgr) ndarray
+    }
+    BaseFacePreprocessingService <|-- CanonicalLandmarkPreprocessingService
+    BaseFacePreprocessingService <|-- BBoxCropPreprocessingService
+
+    %% Concrete Embedding Services
+    class ArcFaceEmbeddingService {
+        +extract(tensor, normalize) ndarray
+        +extract_batch(batch_tensor, normalize) ndarray
+        +embedding_dim 512
+    }
+    BaseFaceEmbeddingService <|-- ArcFaceEmbeddingService
+
+    %% Orchestrator
+    class FaceRecognitionService {
+        -detector: BaseFaceDetectionService
+        -preprocessor: BaseFacePreprocessingService
+        -embedder: BaseFaceEmbeddingService
+        +verify(image1, image2, threshold) VerifyResponse
+        +enroll(person_id, images) EnrollResponse
+        +identify(query_image, top_k) IdentifyResponse
+    }
+    FaceRecognitionService o-- BaseFaceDetectionService
+    FaceRecognitionService o-- BaseFacePreprocessingService
+    FaceRecognitionService o-- BaseFaceEmbeddingService
+```
+
+---
+
+## 📁 Directory Layout
 
 ```text
 Recognition/
-├── Data/                             # Raw input images organized by person
-│   ├── duke/                         # Raw photos of Duke
-│   ├── kyle/                         # Raw photos of Kyle
-│   └── leon/                         # Raw photos of Leon
-├── Face/                             # Cropped/Aligned faces organized by person (112x112)
-│   ├── duke/
-│   ├── kyle/
-│   └── leon/
-├── models/                           # Pretrained model weights
-│   ├── blaze_face_short_range.tflite # MediaPipe BlazeFace face detector
-│   ├── w600k_mbf.onnx                # ArcFace MobileFaceNet embedding model (512-D)
-│   └── download_models.py            # Automatic model downloader script
-├── src/                              # Source modules
-│   ├── __init__.py
-│   ├── config.py                     # Central configuration (paths, thresholds, target size)
-│   ├── detection/                    # Step 1: Face Detection
-│   │   ├── __init__.py
-│   │   └── blazeface_detector.py     # BlazeFace detector wrapper (bbox & 6 landmarks)
-│   ├── preprocessing/                # Step 2: Face Cropping & ArcFace Preprocessing
-│   │   ├── __init__.py
-│   │   ├── face_cropper.py           # Canonical landmark affine alignment & crop saving
-│   │   └── preprocessor.py           # Resize (112x112), BGR->RGB, norm ([-1, 1]), NCHW format
-│   ├── embedding/                    # Step 3: ArcFace Deep Feature Inference
-│   │   ├── __init__.py
-│   │   └── arcface_infer.py          # ArcFace ONNX inference engine (512-D L2 normalized)
-│   ├── utils/                        # Utilities
-│   │   ├── __init__.py
-│   │   ├── image_io.py               # File loading, saving, image directory scanning
-│   │   └── metrics.py                # Cosine similarity, distance metrics & verification stats
-│   └── pipeline.py                   # End-to-end pipeline coordinator
-├── main.py                           # CLI entrypoint
+├── src/
+│   ├── config.py                     # Central configuration & dynamic model selectors
+│   ├── schemas/                      # Pydantic DTOs
+│   │   ├── request_schemas.py        # Base64ImagePayload, VerifyBase64Request, EnrollRequest, IdentifyRequest
+│   │   └── response_schemas.py       # DetectResponse, CropResponse, VerifyResponse, IdentifyResponse
+│   ├── services/                     # Hierarchical Services Layer
+│   │   ├── base/                     # Root Abstract Interfaces (ABCs)
+│   │   │   ├── base_detection.py     # BaseFaceDetectionService
+│   │   │   ├── base_preprocessing.py # BaseFacePreprocessingService
+│   │   │   └── base_embedding.py     # BaseFaceEmbeddingService
+│   │   ├── detection/                # Detection Backends
+│   │   │   ├── blazeface_service.py  # BlazeFaceDetectionService
+│   │   │   └── factory.py            # DetectionServiceFactory
+│   │   ├── preprocessing/            # Preprocessing Backends
+│   │   │   ├── landmark_align_service.py # CanonicalLandmarkPreprocessingService (4-point affine)
+│   │   │   ├── bbox_crop_service.py      # BBoxCropPreprocessingService (margin crop)
+│   │   │   └── factory.py                # PreprocessingServiceFactory
+│   │   ├── embedding/                # Embedding Backends
+│   │   │   ├── arcface_service.py    # ArcFaceEmbeddingService (ONNX)
+│   │   │   └── factory.py            # EmbeddingServiceFactory
+│   │   ├── image_service.py          # Universal image codec (Bytes/Base64/File/Array)
+│   │   └── recognition_service.py    # Domain Orchestration Service
+│   ├── api/                          # REST API Layer
+│   │   ├── app.py                    # FastAPI application & lifecycle
+│   │   └── routes.py                 # REST API endpoints
+│   └── utils/                        # Utilities
+│       ├── image_io.py               # File loading, saving & visualization
+│       └── metrics.py                # Evaluation & distance metrics
+├── main.py                           # CLI & Web Server runner
+├── run_api_demo.py                   # API simulation client faking requests with local Data/
 ├── requirements.txt                  # Python dependencies
 └── README.md                         # Documentation
 ```
 
 ---
 
-## ⚙️ Processing Workflow
+## ⚙️ Dynamic Model Switching via Config
 
-```mermaid
-flowchart TD
-    A["Raw Image (Data/person/*.jpg)"] --> B["MediaPipe BlazeFace Detector"]
-    B --> C["Bounding Box & 6 Facial Landmarks"]
-    C --> D["4-Point Canonical Affine Alignment (112x112)"]
-    D --> E["Save to Face/person/*.jpg"]
-    E --> F["ArcFace Preprocessor<br/>(Resize 112x112, BGR->RGB, (x-127.5)/127.5, NCHW)"]
-    F --> G["ArcFace ONNX Inference Session"]
-    G --> H["512-D L2 Normalized Embedding"]
-    H --> I["Cosine Similarity & Authentication"]
+You can switch detection, preprocessing, or recognition models in [src/config.py](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Recognition/src/config.py) or via environment variables:
+
+```bash
+# Switch preprocessing strategy dynamically:
+export PREPROCESSING_TYPE="bbox_crop"       # options: landmark_affine, bbox_crop
+export DETECTION_BACKBONE="blazeface"       # options: blazeface
+export EMBEDDING_BACKBONE="arcface"         # options: arcface
+
+./venv/bin/python main.py --demo
 ```
-
-1. **Face Detection (`src/detection/`)**:
-   - Uses Google's **MediaPipe BlazeFace** short-range detector.
-   - Computes bounding boxes and 6 keypoints: Right eye, Left eye, Nose tip, Mouth center, Right ear tragion, Left ear tragion.
-2. **Face Cropping & Alignment (`src/preprocessing/face_cropper.py`)**:
-   - Extracts detected face and aligns eye centers, nose tip, and mouth center using a 4-point partial affine similarity transformation (`cv2.estimateAffinePartial2D`).
-   - Crops directly to canonical ArcFace geometry (112x112) to minimize pose distortion.
-   - Saves cropped faces into `Face/<person_name>/<filename>`.
-3. **Preprocessing (`src/preprocessing/preprocessor.py`)**:
-   - Resizes image to target resolution `(112, 112)`.
-   - Converts color format from BGR to RGB.
-   - Normalizes pixel values: `(pixel - 127.5) / 127.5` $\in [-1.0, 1.0]$.
-   - Shapes into NCHW tensor `(1, 3, 112, 112)` with `float32` precision.
-4. **ArcFace Feature Embedding (`src/embedding/arcface_infer.py`)**:
-   - Evaluates input through ArcFace backbone via ONNX Runtime.
-   - Computes 512-dimensional output embedding and applies L2 normalization ($\|v\|_2 = 1$).
-5. **Evaluation & Verification (`src/utils/metrics.py`)**:
-   - Computes pairwise cosine similarity matrix.
-   - Distinguishes genuine pairs (same person: similarity $\approx 0.50 - 0.82$) from imposter pairs (different people: similarity $\approx 0.00 - 0.35$).
 
 ---
 
-## 🚀 Quickstart & Usage
+## 🔌 How to Add a New Model Backend in the Future
 
-### 1. Installation
-Activate the virtual environment and install dependencies:
-```bash
-./venv/bin/pip install -r requirements.txt
+Adding a new model (e.g. **RetinaFace**, **SCRFD**, or **AdaFace**) takes only 2 simple steps:
+
+### Step 1: Subclass the Root Base Interface
+```python
+# src/services/embedding/adaface_service.py
+from src.services.base import BaseFaceEmbeddingService
+
+class AdaFaceEmbeddingService(BaseFaceEmbeddingService):
+    def __init__(self, model_path=None):
+        # Load AdaFace weights...
+        pass
+
+    @property
+    def model_name(self) -> str:
+        return "AdaFace (ResNet-50)"
+
+    @property
+    def embedding_dim(self) -> int:
+        return 512
+
+    def extract(self, tensor, normalize=True):
+        # Run inference...
+        return embedding
+
+    def extract_batch(self, batch_tensor, normalize=True):
+        return embeddings
 ```
 
-### 2. Run Full End-to-End Pipeline
-Detects faces from `Data/`, saves aligned crops to `Face/`, extracts embeddings, and displays verification metrics and similarity table:
+### Step 2: Register in the Factory
+```python
+# In src/services/embedding/factory.py
+EmbeddingServiceFactory.register("adaface", AdaFaceEmbeddingService)
+```
+Now setting `export EMBEDDING_BACKBONE="adaface"` automatically activates AdaFace across all API endpoints and CLI commands without touching any existing business logic!
+
+---
+
+## 🚀 Execution Commands
+
+### 1. Run API Simulation Demo (Faking API Requests using `Data/`)
 ```bash
-./venv/bin/python main.py --action all
+./venv/bin/python main.py --demo
+# or
+./venv/bin/python run_api_demo.py
 ```
 
-### 3. Step 1 Only: Face Detection & Cropping
-Extracts and saves faces from `Data/` to `Face/`:
+### 2. Start Live FastAPI Web Server
 ```bash
-./venv/bin/python main.py --action detect
+./venv/bin/python main.py --serve --port 8000
 ```
+Swagger UI docs: **`http://localhost:8000/docs`**
 
-### 4. Step 2 Only: Extract ArcFace Embeddings
-Computes embeddings from existing cropped images in `Face/`:
-```bash
-./venv/bin/python main.py --action embed
-```
-
-### 5. Step 3: Compare / Verify Any Two Images
+### 3. CLI 1:1 Verification
 ```bash
 ./venv/bin/python main.py --action verify --img1 Data/duke/duke.jpg --img2 Data/duke/duke1.jpg
 ```
-Output:
-```text
-Comparing Image 1: Data/duke/duke.jpg
-       with Image 2: Data/duke/duke1.jpg
 
-Similarity Score: 0.5353 (Threshold: 0.40)
-Verification Result:  MATCH (Same Person)
-```
-
----
-
-## 🐍 Python API Example
-
-```python
-from src.detection import BlazeFaceDetector
-from src.preprocessing import FaceCropper, FacePreprocessor
-from src.embedding import ArcFaceEmbedding
-from src.utils import load_image, cosine_similarity
-
-# 1. Initialize modules
-detector = BlazeFaceDetector()
-cropper = FaceCropper()
-preprocessor = FacePreprocessor()
-embedder = ArcFaceEmbedding(preprocessor=preprocessor)
-
-# 2. Load raw image & detect face
-img_bgr = load_image("Data/duke/duke.jpg")
-detection = detector.detect_best(img_bgr)
-
-# 3. Crop & align face (112x112)
-aligned_face = cropper.extract_face(img_bgr, detection, use_alignment=True)
-
-# 4. Extract 512-D embedding
-embedding = embedder.extract_feature(aligned_face)
-print(f"Embedding extracted! Shape: {embedding.shape}")  # (512,)
+### 4. CLI Full Dataset Evaluation Matrix
+```bash
+./venv/bin/python main.py --action all
 ```
