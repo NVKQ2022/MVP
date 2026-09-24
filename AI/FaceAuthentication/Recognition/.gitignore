@@ -1,0 +1,21 @@
+# Environments & Virtualenv
+venv/
+.env
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Pretrained Model Weights (downloadable via models/download_models.py)
+models/*.onnx
+models/*.tflite
+models/*.zip
+!models/download_models.py
+
+# Extracted OS libraries
+libs/
+
+# Demo temporary outputs
+Face/api_demo_output/
