@@ -1,0 +1,47 @@
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: var(--header-height);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklch, var(--background) 95%, transparent);
+  backdrop-filter: blur(8px);
+  padding-inline: 1rem;
+
+  &__mobileTrigger {
+    @include respond-up($breakpoint-md) {
+      display: none;
+    }
+  }
+
+  &__mobileSheet {
+    width: 16rem;
+    padding: 0;
+  }
+
+  &__mobileSidebar {
+    width: 100%;
+    border: none;
+  }
+
+  &__title {
+    flex: 1;
+
+    h1 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}

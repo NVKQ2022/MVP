@@ -1,0 +1,25 @@
+.admin_usertable_sortable_column {
+    cursor: pointer;
+}
+
+.admin_usertable_text_right {
+    text-align: right;
+}
+
+.admin_usertable_empty_table {
+    height: 6rem;
+    text-align: center;
+}
+
+.admin_usertable_tablerow {
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--muted);
+    }
+
+}
+
+.admin_usertable_bold_column {
+    font-weight: 500;
+}

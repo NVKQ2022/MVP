@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "FirstAPIProject.Application": {
+      "commandName": "Project"
+    },
+    "Profile 1": {
+      "commandName": "Executable",
+      "executablePath": "\\\\wsl.localhost\\Ubuntu\\home\\quan\\projects\\techshop\\TechShopApi\\Program.cs"
+    }
+  }
+}

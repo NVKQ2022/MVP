@@ -1,0 +1,22 @@
+.status {
+  &--active {
+    background: var(--status-active-bg);
+    color: var(--status-active-fg);
+    border-color: var(--status-active-border);
+  }
+  &--inactive {
+    background: var(--status-inactive-bg);
+    color: var(--status-inactive-fg);
+    border-color: var(--status-inactive-border);
+  }
+  &--locked {
+    background: var(--status-locked-bg);
+    color: var(--status-locked-fg);
+    border-color: var(--status-locked-border);
+  }
+  &--pending {
+    background: var(--status-pending-bg);
+    color: var(--status-pending-fg);
+    border-color: var(--status-pending-border);
+  }
+}

@@ -1,0 +1,18 @@
+.dataTable {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow: hidden;
+
+  &__checkboxCell,
+  &__actionsCell {
+    width: 2.5rem;
+  }
+
+  &__actionsCell {
+    text-align: right;
+  }
+
+  &__actionsCellRight {
+    text-align: right;
+  }
+}

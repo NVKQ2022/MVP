@@ -1,0 +1,89 @@
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklch, var(--background) 95%, transparent);
+  backdrop-filter: blur(8px);
+
+  &__inner {
+    @include flex-between;
+    max-width: 72rem;
+    margin-inline: auto;
+    height: var(--header-height);
+    padding-inline: 1rem;
+  }
+
+  &__nav {
+    display: none;
+    align-items: center;
+    gap: 1.5rem;
+
+    @include respond-up($breakpoint-md) {
+      display: flex;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__avatarButton {
+    display: none;
+
+    @include respond-up($breakpoint-md) {
+      display: inline-flex;
+    }
+  }
+
+  &__mobileTrigger {
+    @include respond-up($breakpoint-md) {
+      display: none;
+    }
+  }
+}
+
+.navLink {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  transition: color 150ms ease;
+
+  &:hover {
+    color: var(--primary);
+  }
+
+  &--active {
+    color: var(--primary);
+  }
+}
+
+.mobileNav {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.header__authActions {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+
+  @include respond-up($breakpoint-md) {
+    display: flex;
+  }
+}
+
+.mobileAuthActions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+}

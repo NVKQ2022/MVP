@@ -1,0 +1,124 @@
+.announcement-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.announcement-detail__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.announcement-detail__btn-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.375rem;
+}
+
+.announcement-detail__card {
+  overflow: hidden;
+}
+
+.announcement-detail__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.announcement-detail__header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.announcement-detail__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.announcement-detail__badges {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.announcement-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground, #6b7280);
+}
+
+.announcement-detail__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.announcement-detail__meta-item--muted {
+  opacity: 0.75;
+}
+
+.announcement-detail__meta-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.announcement-detail__content {
+  padding-top: 1.25rem;
+}
+
+.announcement-detail__scroll {
+  max-height: 60vh;
+}
+
+.announcement-detail__body {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--foreground, #111827);
+}
+
+.announcement-detail__body p {
+  margin: 0 0 1em;
+}
+
+.announcement-detail__body img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+}
+
+.announcement-detail__body a {
+  color: var(--primary, #2563eb);
+  text-decoration: underline;
+}
+
+.announcement-detail__skeleton-title {
+  height: 1.5rem;
+  width: 60%;
+  margin-bottom: 0.5rem;
+}
+
+.announcement-detail__skeleton-meta {
+  height: 1rem;
+  width: 30%;
+}
+
+.announcement-detail__skeleton-line {
+  height: 0.875rem;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.announcement-detail__skeleton-line--short {
+  width: 40%;
+}
