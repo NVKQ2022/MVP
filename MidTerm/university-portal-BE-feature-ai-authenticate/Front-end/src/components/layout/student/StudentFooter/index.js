@@ -1,1 +1,0 @@
-export { StudentFooter } from './StudentFooter';

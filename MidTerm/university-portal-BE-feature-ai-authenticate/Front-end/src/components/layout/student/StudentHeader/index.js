@@ -1,1 +1,0 @@
-export { StudentHeader } from './StudentHeader';

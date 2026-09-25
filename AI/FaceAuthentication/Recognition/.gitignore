@@ -9,10 +9,10 @@ __pycache__/
 .pytest_cache/
 
 # Pretrained Model Weights (downloadable via models/download_models.py)
-models/*.onnx
-models/*.tflite
-models/*.zip
-!models/download_models.py
+#models/*.onnx
+#models/*.tflite
+#models/*.zip
+#!models/download_models.py
 
 # Extracted OS libraries
 libs/
