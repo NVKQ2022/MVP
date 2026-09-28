@@ -124,6 +124,25 @@ flowchart TD
 
 ---
 
+## 🔒 Face Registration Backend Contract Alignment
+
+When registering a face via `POST /api/v1/Auth/face-register`, the backend ASP.NET Core endpoint binds against the DTO:
+
+```csharp
+public sealed class FaceAuthenticateRegisterRequest
+{
+    public required IFormFile Capture { get; init; }
+}
+```
+
+### Problem & Fix
+- **Root Cause of 400 Bad Request**: Previously, the settings registration handlers (`AdminSettings/Settings.jsx` and `StudentSettings/Settings.jsx`) appended the file blob under the key `'faceImage'` (`formData.append('faceImage', blob, 'face.jpg')`). Since the backend required `'Capture'`, ASP.NET Core rejected the request with `400 Bad Request` (`"The Capture field is required."`).
+- **Fix Applied**:
+  - Aligned the FormData field key to `'Capture'` (`formData.append('Capture', blob, 'face_capture.jpg')`), matching both `FaceAuthenticateRegisterRequest` and the login flow in `LoginForm.jsx`.
+  - Integrated `getProblemDetail(err)` from `@/utils/apiError` to extract detailed backend validation errors directly into the UI error alert instead of showing generic Axios HTTP errors.
+
+---
+
 ## 🧪 Verification & Build Status
 
 1. **Frontend Production Build**:
@@ -136,7 +155,7 @@ flowchart TD
    ✓ 2372 modules transformed.
    dist/index.html                   0.45 kB
    dist/assets/index-B5RgCKKq.css   57.43 kB
-   dist/assets/index-BGUqXUe0.js   942.19 kB
+   dist/assets/index-B1cAMb3-.js   942.18 kB
    ✓ built in 1.15s
    ```
    Zero build errors or syntax warnings.
@@ -150,3 +169,4 @@ flowchart TD
    tests/test_api_endpoints.py .............. [100%]
    14 passed in 1.98s
    ```
+

@@ -13,6 +13,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { FaceDetection, useAuth } from '@/features/auth';
 import { authApi } from '@/features/auth/services/auth.api';
 import { toast } from '@/components/common/Toaster/toast';
+import { getProblemDetail } from '@/utils/apiError';
 import styles from './Settings.module.scss';
 
 const MFA_ACTION_COOLDOWN_MS = 1500;
@@ -63,12 +64,12 @@ export function AdminSettings() {
       if (!blob) throw new Error('No face captured. Please position your face in the center.');
 
       const formData = new FormData();
-      formData.append('faceImage', blob, 'face.jpg');
+      formData.append('Capture', blob, 'face_capture.jpg');
       await authApi.faceRegister(formData);
 
       setIsSetupOpen(false);
     } catch (err) {
-      setCaptureError(err instanceof Error ? err.message : 'Failed to capture face');
+      setCaptureError(getProblemDetail(err) || err.message || 'Failed to capture face');
       faceDetectionRef.current?.resetCooldown();
     } finally {
       setIsCapturing(false);

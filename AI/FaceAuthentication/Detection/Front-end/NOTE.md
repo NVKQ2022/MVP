@@ -20,7 +20,7 @@ This document details all files modified to implement the requirements:
 
 To adjust the wait time (the amount of time the user's face must remain inside the box before the request is automatically triggered), open:
 
-📁 **[`src/config/appConfig.js`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/config/appConfig.js)**
+📁 **[`AI/FaceAuthentication/Detection/Front-end/src/config/appConfig.js`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/config/appConfig.js)**
 
 ```javascript
 export const appConfig = {
@@ -64,7 +64,7 @@ export const appConfig = {
 | **4** | [`src/features/auth/components/LoginForm/LoginForm.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/features/auth/components/LoginForm/LoginForm.jsx) | **Modified** | Face Login modal: sends whole image blob, switches button to **"Try Again"** upon non-200 responses, pauses auto-capture on error, and resumes on retry click. |
 | **5** | [`src/components/layout/admin/AdminSettings/Settings.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/components/layout/admin/AdminSettings/Settings.jsx) | **Modified** | Admin face registration: sends whole frame, switches button to **"Try Again"** upon non-200 responses. |
 | **6** | [`src/components/layout/student/StudentSettings/Settings.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/components/layout/student/StudentSettings/Settings.jsx) | **Modified** | Student face registration: sends whole frame, switches button to **"Try Again"** upon non-200 responses. |
-| **7** | [`NOTE.md`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/NOTE.md) | **Updated** | Comprehensive technical documentation and change log (this file). |
+| **7** | [`AI/FaceAuthentication/NOTE.md`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/NOTE.md) | **Updated** | Comprehensive technical documentation and change log (this file). |
 
 ---
 
@@ -124,6 +124,25 @@ flowchart TD
 
 ---
 
+## 🔒 Face Registration Backend Contract Alignment
+
+When registering a face via `POST /api/v1/Auth/face-register`, the backend ASP.NET Core endpoint binds against the DTO:
+
+```csharp
+public sealed class FaceAuthenticateRegisterRequest
+{
+    public required IFormFile Capture { get; init; }
+}
+```
+
+### Problem & Fix
+- **Root Cause of 400 Bad Request**: Previously, the settings registration handlers (`AdminSettings/Settings.jsx` and `StudentSettings/Settings.jsx`) appended the file blob under the key `'faceImage'` (`formData.append('faceImage', blob, 'face.jpg')`). Since the backend required `'Capture'`, ASP.NET Core rejected the request with `400 Bad Request` (`"The Capture field is required."`).
+- **Fix Applied**:
+  - Aligned the FormData field key to `'Capture'` (`formData.append('Capture', blob, 'face_capture.jpg')`), matching both `FaceAuthenticateRegisterRequest` and the login flow in `LoginForm.jsx`.
+  - Integrated `getProblemDetail(err)` from `@/utils/apiError` to extract detailed backend validation errors directly into the UI error alert instead of showing generic Axios HTTP errors.
+
+---
+
 ## 🧪 Verification & Build Status
 
 1. **Frontend Production Build**:
@@ -136,7 +155,7 @@ flowchart TD
    ✓ 2372 modules transformed.
    dist/index.html                   0.45 kB
    dist/assets/index-B5RgCKKq.css   57.43 kB
-   dist/assets/index-BGUqXUe0.js   942.19 kB
+   dist/assets/index-B1cAMb3-.js   942.18 kB
    ✓ built in 1.15s
    ```
    Zero build errors or syntax warnings.
@@ -150,3 +169,4 @@ flowchart TD
    tests/test_api_endpoints.py .............. [100%]
    14 passed in 1.98s
    ```
+
