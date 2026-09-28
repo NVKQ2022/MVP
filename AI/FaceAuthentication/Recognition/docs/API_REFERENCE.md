@@ -1,6 +1,6 @@
 # 📡 REST API Reference
 
-The Face Recognition Service exposes a REST API via FastAPI. This document details each endpoint, input schemas, and sample requests.
+The Face Recognition & Authentication Service exposes a REST API via FastAPI. This document details each endpoint, input schemas, and sample requests.
 
 ---
 
@@ -20,11 +20,14 @@ The Face Recognition Service exposes a REST API via FastAPI. This document detai
 | [`/detect/file`](#3-detect-faces-multipart) | `POST` | Multipart File | Detect faces from uploaded file |
 | [`/crop`](#4-align--crop-face-base64) | `POST` | JSON (Base64) | Returns 112x112 canonical aligned face |
 | [`/crop/file`](#5-align--crop-face-multipart) | `POST` | Multipart File | Returns 112x112 crop from uploaded file |
-| [`/embedding`](#6-extract-embedding) | `POST` | JSON (Base64) | Extracts 512-D ArcFace embedding vector |
-| [`/verify`](#7-11-face-verification-base64) | `POST` | JSON (Base64) | 1:1 Face verification between two images |
-| [`/verify/file`](#8-11-face-verification-multipart) | `POST` | Multipart Form | 1:1 Verification with uploaded files |
-| [`/enroll`](#9-enroll-identity) | `POST` | JSON (Base64) | Register a person in gallery with photos |
-| [`/identify`](#10-1n-identification) | `POST` | JSON (Base64) | Search query face against registered gallery |
+| [`/embedding`](#6-extract-512-d-embedding) | `POST` | JSON (Base64) | Extracts 512-D ArcFace embedding vector |
+| [`/embedding/file`](#6-extract-512-d-embedding) | `POST` | Multipart File | Extracts 512-D embedding from uploaded file |
+| [`/liveness`](#7-anti-spoofing--liveness-base64) | `POST` | JSON (Base64) | Evaluates face anti-spoofing (print/replay) |
+| [`/liveness/file`](#8-anti-spoofing--liveness-multipart) | `POST` | Multipart File | Evaluates liveness from uploaded file |
+| [`/verify`](#9-11-face-verification-base64) | `POST` | JSON (Base64) | 1:1 Face verification with optional liveness check |
+| [`/verify/file`](#10-11-face-verification-multipart-files) | `POST` | Multipart Form | 1:1 Verification with uploaded files & liveness |
+| [`/enroll`](#11-enroll-identity) | `POST` | JSON (Base64) | Register a person in gallery with photos |
+| [`/identify`](#12-1n-identification) | `POST` | JSON (Base64) | Search query face against registered gallery |
 
 ---
 
@@ -115,7 +118,17 @@ curl -X POST "http://localhost:8000/api/v1/detect/file" \
 
 ---
 
-## 5. Extract 512-D Embedding
+## 5. Align & Crop Face (Multipart)
+`POST /api/v1/crop/file`
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/crop/file" \
+     -F "file=@Data/leon/leon.jpg;type=image/jpeg"
+```
+
+---
+
+## 6. Extract 512-D Embedding
 `POST /api/v1/embedding`
 
 ### Request Body
@@ -131,22 +144,82 @@ curl -X POST "http://localhost:8000/api/v1/detect/file" \
   "success": true,
   "embedding_dim": 512,
   "embedding": [
-    -0.0539, -0.0653, -0.0573, -0.0164, 0.0015, ...
+    -0.0539, -0.0653, -0.0573, -0.0164, 0.0015
   ]
 }
 ```
 
 ---
 
-## 6. 1:1 Face Verification (Base64)
+## 7. Anti-Spoofing & Liveness (Base64)
+`POST /api/v1/liveness`
+
+Evaluates whether the facial image is a real live human face or a presentation spoof attack (2D printed photo or screen replay) using MiniFASNetV2.
+
+### Request Body
+```json
+{
+  "image_base64": "<base64_string>"
+}
+```
+
+### Response (200 OK - Real Face)
+```json
+{
+  "success": true,
+  "face_count": 1,
+  "liveness": {
+    "is_real": true,
+    "confidence": 0.9995,
+    "label": "Real",
+    "attack_type": null,
+    "raw_scores": [0.0001, 0.9995, 0.0004]
+  },
+  "details": "Face is Real (confidence: 0.9995)"
+}
+```
+
+### Response (200 OK - Spoof Attack Detected)
+```json
+{
+  "success": true,
+  "face_count": 1,
+  "liveness": {
+    "is_real": false,
+    "confidence": 0.0512,
+    "label": "Spoof",
+    "attack_type": "print",
+    "raw_scores": [0.8923, 0.0512, 0.0565]
+  },
+  "details": "Face is Spoof (confidence: 0.0512)"
+}
+```
+
+---
+
+## 8. Anti-Spoofing & Liveness (Multipart)
+`POST /api/v1/liveness/file`
+
+### cURL Example
+```bash
+curl -X POST "http://localhost:8000/api/v1/liveness/file" \
+     -F "file=@Data/kyle/kyle.jpg;type=image/jpeg"
+```
+
+---
+
+## 9. 1:1 Face Verification (Base64)
 `POST /api/v1/verify`
+
+Compares two facial images. When `check_liveness` is enabled (default `true` or configured via `ENABLE_LIVENESS`), both images are verified for liveness before matching. If spoofing is detected, matching is immediately rejected.
 
 ### Request Body
 ```json
 {
   "image1_base64": "<base64_string_1>",
   "image2_base64": "<base64_string_2>",
-  "threshold": 0.40
+  "threshold": 0.40,
+  "check_liveness": true
 }
 ```
 
@@ -155,15 +228,29 @@ curl -X POST "http://localhost:8000/api/v1/detect/file" \
 {
   "success": true,
   "match": true,
-  "similarity_score": 0.5353,
+  "similarity_score": 0.5350,
   "threshold": 0.40,
-  "status": "MATCH (Same Person)"
+  "status": "MATCH (Same Person)",
+  "liveness1": {
+    "is_real": true,
+    "confidence": 0.9990,
+    "label": "Real",
+    "attack_type": null,
+    "raw_scores": [0.0, 0.999, 0.001]
+  },
+  "liveness2": {
+    "is_real": true,
+    "confidence": 1.0,
+    "label": "Real",
+    "attack_type": null,
+    "raw_scores": [0.0, 1.0, 0.0]
+  }
 }
 ```
 
 ---
 
-## 7. 1:1 Face Verification (Multipart Files)
+## 10. 1:1 Face Verification (Multipart Files)
 `POST /api/v1/verify/file`
 
 ### cURL Example
@@ -171,13 +258,16 @@ curl -X POST "http://localhost:8000/api/v1/detect/file" \
 curl -X POST "http://localhost:8000/api/v1/verify/file" \
      -F "file1=@Data/duke/duke.jpg" \
      -F "file2=@Data/duke/duke1.jpg" \
-     -F "threshold=0.40"
+     -F "threshold=0.40" \
+     -F "check_liveness=true"
 ```
 
 ---
 
-## 8. Enroll Identity
+## 11. Enroll Identity
 `POST /api/v1/enroll`
+
+Registers a person into the in-memory gallery using one or more facial photos. A centroid template average is computed across all valid images. Liveness check is automatically verified to prevent spoof enrollment.
 
 ### Request Body
 ```json
@@ -186,7 +276,8 @@ curl -X POST "http://localhost:8000/api/v1/verify/file" \
   "images_base64": [
     "<base64_photo_1>",
     "<base64_photo_2>"
-  ]
+  ],
+  "check_liveness": true
 }
 ```
 
@@ -203,15 +294,18 @@ curl -X POST "http://localhost:8000/api/v1/verify/file" \
 
 ---
 
-## 9. 1:N Identification
+## 12. 1:N Identification
 `POST /api/v1/identify`
+
+Searches a probe query face against all registered gallery identities.
 
 ### Request Body
 ```json
 {
   "image_base64": "<probe_photo_base64>",
   "top_k": 3,
-  "threshold": 0.40
+  "threshold": 0.40,
+  "check_liveness": true
 }
 ```
 
@@ -222,13 +316,13 @@ curl -X POST "http://localhost:8000/api/v1/verify/file" \
   "identified": true,
   "top_match": {
     "person_id": "leon",
-    "similarity_score": 0.6917,
+    "similarity_score": 0.6931,
     "is_match": true
   },
   "all_candidates": [
-    {"person_id": "leon", "similarity_score": 0.6917, "is_match": true},
-    {"person_id": "duke", "similarity_score": 0.3099, "is_match": false},
-    {"person_id": "kyle", "similarity_score": 0.1273, "is_match": false}
+    {"person_id": "leon", "similarity_score": 0.6931, "is_match": true},
+    {"person_id": "duke", "similarity_score": 0.3105, "is_match": false},
+    {"person_id": "kyle", "similarity_score": 0.1280, "is_match": false}
   ]
 }
 ```

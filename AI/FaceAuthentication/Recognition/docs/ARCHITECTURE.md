@@ -28,12 +28,14 @@ flowchart TD
         subgraph SubServices ["Abstract & Concrete Model Services"]
             DetFactory["DetectionServiceFactory"] --> DetService["BlazeFaceDetectionService"]
             PrepFactory["PreprocessingServiceFactory"] --> PrepService["CanonicalLandmarkPreprocessingService"]
+            AntiSpoofFactory["AntiSpoofingServiceFactory"] --> FASService["MiniFASNetAntiSpoofingService"]
             EmbFactory["EmbeddingServiceFactory"] --> EmbService["ArcFaceEmbeddingService"]
         end
     end
 
     subgraph CoreModels ["4. Underlying Deep Learning Models"]
         BlazeFace["MediaPipe BlazeFace (TFLite)"]
+        MiniFASNet["MiniFASNetV2 Anti-Spoofing (ONNX)"]
         ArcFace["ArcFace MobileFaceNet (ONNX)"]
     end
 
@@ -42,8 +44,10 @@ flowchart TD
     Orchestrator --> Codec
     Orchestrator --> DetFactory
     Orchestrator --> PrepFactory
+    Orchestrator --> AntiSpoofFactory
     Orchestrator --> EmbFactory
     DetService --> BlazeFace
+    FASService --> MiniFASNet
     EmbService --> ArcFace
 ```
 
@@ -54,23 +58,27 @@ flowchart TD
 ### 1. Schemas Layer (`src/schemas/`)
 - Encapsulates Request and Response Data Transfer Objects (DTOs) using **Pydantic**.
 - Provides data validation, type enforcement, and OpenAPI documentation generation.
-- Decouples external API models from internal computer vision representations.
+- DTOs include `FaceDetectionDTO`, `BoundingBoxDTO`, `LivenessDTO`, `VerifyResponse`, `EnrollResponse`, etc.
 
 ### 2. Base Services Layer (`src/services/base/`)
 - Defines formal Python **Abstract Base Classes (`ABC`)**:
   - `BaseFaceDetectionService`: Contract for face detection algorithms.
   - `BaseFacePreprocessingService`: Contract for alignment, cropping, and normalization.
+  - `BaseAntiSpoofingService`: Contract for face anti-spoofing and liveness classification.
   - `BaseFaceEmbeddingService`: Contract for deep feature vector extraction.
-- Ensures new models can be plugged in without modifying any application code (**Open-Closed Principle**).
+- Ensures new models can be plugged in without modifying application orchestration (**Open-Closed Principle**).
 
 ### 3. Concrete Model Services
 - **Detection (`src/services/detection/`)**:
   - `BlazeFaceDetectionService`: Implements MediaPipe BlazeFace face detection and 6-landmark extraction.
   - `DetectionServiceFactory`: Dynamically instantiates the active detector based on configuration.
 - **Preprocessing (`src/services/preprocessing/`)**:
-  - `CanonicalLandmarkPreprocessingService`: Applies 4-point partial affine similarity transformation to canonical $(112, 112)$ coordinates and normalizes pixels to $[-1.0, 1.0]$.
+  - `CanonicalLandmarkPreprocessingService`: Applies 4-point partial affine similarity transformation to canonical $(112, 112)$ coordinates.
   - `BBoxCropPreprocessingService`: Margin-padded bounding box cropping.
   - `PreprocessingServiceFactory`: Creates preprocessing instances dynamically.
+- **Anti-Spoofing & Liveness (`src/services/antispoofing/`)**:
+  - `MiniFASNetAntiSpoofingService`: Evaluates 2D printed photo attacks and digital screen replay attacks via MiniFASNetV2 ONNX model with scale 2.7 context expansion.
+  - `AntiSpoofingServiceFactory`: Creates anti-spoofing instances dynamically.
 - **Embedding (`src/services/embedding/`)**:
   - `ArcFaceEmbeddingService`: Runs ArcFace ONNX inference to yield 512-dimensional L2-normalized feature vectors.
   - `EmbeddingServiceFactory`: Creates embedding extractor instances dynamically.
@@ -79,11 +87,12 @@ flowchart TD
 - `ImageCodecService`: Universal adapter decoding incoming payloads (raw bytes, Base64 strings, file streams, NumPy arrays) into standard OpenCV BGR images and encoding outputs.
 
 ### 5. Orchestrator Service (`src/services/orchestrator/`)
-- `FaceRecognitionService`: Facade coordinating Detection $\rightarrow$ Alignment $\rightarrow$ Preprocessing $\rightarrow$ ArcFace Inference.
+- `FaceRecognitionService`: Facade coordinating Detection $\rightarrow$ Anti-Spoofing $\rightarrow$ Alignment $\rightarrow$ ArcFace Inference.
 - Manages business workflows:
-  - 1:1 Verification (`verify`)
-  - Multi-photo Centroid Gallery Enrollment (`enroll`)
-  - 1:N Search and Identification (`identify`)
+  - Liveness verification (`check_liveness`)
+  - 1:1 Verification (`verify`) with anti-spoofing rejection
+  - Multi-photo Centroid Gallery Enrollment (`enroll`) with spoof prevention
+  - 1:N Search and Identification (`identify`) with probe liveness check
 
 ### 6. API Layer (`src/api/`)
 - `app.py`: FastAPI application setup, CORS middleware, and service lifecycle management.
@@ -96,7 +105,8 @@ flowchart TD
 | Pattern | Where It Is Used | Benefit |
 | :--- | :--- | :--- |
 | **Service Class Pattern** | All modules under `src/services/` | Single-responsibility business logic isolated from controllers and UI. |
-| **Abstract Factory Pattern** | `DetectionServiceFactory`, `EmbeddingServiceFactory`, `PreprocessingServiceFactory` | Dynamically switches model backends via config strings or environment variables. |
+| **Abstract Factory Pattern** | `DetectionServiceFactory`, `AntiSpoofingServiceFactory`, `EmbeddingServiceFactory`, `PreprocessingServiceFactory` | Dynamically switches model backends via config strings or environment variables. |
 | **Dependency Inversion (DIP)** | `FaceRecognitionService` depends on Base ABCs | High-level business logic is decoupled from specific deep learning frameworks. |
 | **Facade Pattern** | `FaceRecognitionService` | Hides complex multi-stage pipeline orchestration behind simple business methods. |
 | **DTO (Data Transfer Object)** | `src/schemas/` | Standardizes API contracts and ensures clean separation of data and logic. |
+| **Adapter Pattern** | `ImageCodecService` | Translates heterogeneous input data formats into standard in-memory representations. |
