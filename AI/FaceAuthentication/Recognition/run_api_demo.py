@@ -91,6 +91,24 @@ def run_demo():
         print(f"First 5 Vector Values: {[round(v, 4) for v in emb_data['embedding'][:5]]}...")
 
         # ----------------------------------------------------------------------
+        # 3B. Whole Image -> Liveness Verification -> Pure Embedding Only
+        # ----------------------------------------------------------------------
+        print(f"\n[API Call 3B] POST /api/v1/embedding/live (Whole Image -> Liveness -> Pure Embedding)")
+        resp_live_emb = client.post("/api/v1/embedding/live", json={"image_base64": leon_b64})
+        print(f"Status Code (Live Genuine): {resp_live_emb.status_code}")
+        live_emb_data = resp_live_emb.json()
+        print(f"Response Keys: {list(live_emb_data.keys())} (Strictly 'embedding' only)")
+        print(f"Vector Length: {len(live_emb_data['embedding'])}")
+        print(f"First 5 Vector Values: {[round(v, 4) for v in live_emb_data['embedding'][:5]]}...")
+
+        print(f"\n[API Call 3C] POST /api/v1/embedding/live (Spoof Attack Defense Test)")
+        spoof_demo_path = ANTISPOOFING_DATA_DIR / "spoof" / "spoof_replay_1.jpg"
+        spoof_demo_b64 = encode_file_to_base64(spoof_demo_path)
+        resp_spoof_emb = client.post("/api/v1/embedding/live", json={"image_base64": spoof_demo_b64})
+        print(f"Status Code (Spoof Detected): {resp_spoof_emb.status_code}")
+        print(f"Error Detail: {resp_spoof_emb.json()['detail']}")
+
+        # ----------------------------------------------------------------------
         # 4. Anti-Spoofing & Liveness Checks (Real Face vs Spoof Attack)
         # ----------------------------------------------------------------------
         real_img_path = ANTISPOOFING_DATA_DIR / "real" / "real_1.jpg"

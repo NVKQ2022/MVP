@@ -80,6 +80,7 @@ classDiagram
         -preprocessor: BaseFacePreprocessingService
         -antispoof: BaseAntiSpoofingService
         -embedder: BaseFaceEmbeddingService
+        +get_live_face_embedding(image_input) List~float~
         +check_liveness(image_input) LivenessResponse
         +verify(image1, image2, threshold) VerifyResponse
         +enroll(person_id, images) EnrollResponse
@@ -101,7 +102,7 @@ Recognition/
 │   ├── config.py                     # Central configuration & dynamic model selectors
 │   ├── schemas/                      # Pydantic DTOs
 │   │   ├── request_schemas.py        # Base64ImagePayload, VerifyBase64Request, EnrollRequest, IdentifyRequest
-│   │   └── response_schemas.py       # DetectResponse, CropResponse, LivenessResponse, VerifyResponse, IdentifyResponse
+│   │   └── response_schemas.py       # PureEmbeddingResponse, DetectResponse, CropResponse, LivenessResponse, VerifyResponse, IdentifyResponse
 │   ├── services/                     # Hierarchical Services Layer
 │   │   ├── base/                     # Root Abstract Interfaces (ABCs)
 │   │   │   ├── base_detection.py     # BaseFaceDetectionService

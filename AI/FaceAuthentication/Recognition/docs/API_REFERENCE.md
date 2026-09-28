@@ -22,6 +22,8 @@ The Face Recognition & Authentication Service exposes a REST API via FastAPI. Th
 | [`/crop/file`](#5-align--crop-face-multipart) | `POST` | Multipart File | Returns 112x112 crop from uploaded file |
 | [`/embedding`](#6-extract-512-d-embedding) | `POST` | JSON (Base64) | Extracts 512-D ArcFace embedding vector |
 | [`/embedding/file`](#6-extract-512-d-embedding) | `POST` | Multipart File | Extracts 512-D embedding from uploaded file |
+| [`/embedding/live`](#6b-liveness-verified-pure-embedding-whole-image) | `POST` | JSON (Base64) | Whole image -> Liveness check -> Pure 512-D embedding only |
+| [`/embedding/live/file`](#6b-liveness-verified-pure-embedding-whole-image) | `POST` | Multipart File | Whole image file -> Liveness -> Pure 512-D embedding only |
 | [`/liveness`](#7-anti-spoofing--liveness-base64) | `POST` | JSON (Base64) | Evaluates face anti-spoofing (print/replay) |
 | [`/liveness/file`](#8-anti-spoofing--liveness-multipart) | `POST` | Multipart File | Evaluates liveness from uploaded file |
 | [`/verify`](#9-11-face-verification-base64) | `POST` | JSON (Base64) | 1:1 Face verification with optional liveness check |
@@ -147,6 +149,49 @@ curl -X POST "http://localhost:8000/api/v1/crop/file" \
     -0.0539, -0.0653, -0.0573, -0.0164, 0.0015
   ]
 }
+```
+
+---
+
+## 6B. Liveness-Verified Pure Embedding (Whole Image)
+`POST /api/v1/embedding/live` & `POST /api/v1/embedding/live/file`  
+*(Route aliases: `/api/v1/live-embedding`, `/api/v1/live-embedding/file`)*
+
+Receives an uncropped **whole image** (scene or camera frame). Executes the unified pipeline:
+1. **Face Detection**: Localizes the best face bounding box and landmarks.
+2. **Anti-Spoofing & Liveness Check**: Evaluates presentation attacks using full image scene context ($2.7\times$ expansion). If a 2D print or screen replay is detected, the request is immediately rejected with `400 Bad Request`.
+3. **Canonical Alignment**: Performs 4-point affine transformation to canonical $112\times 112$ resolution.
+4. **ArcFace Embedding**: Extracts 512-D unit L2-normalized face vector.
+5. **Pure Payload Response**: Returns **only** the `embedding` array, matching DTO contracts for downstream microservices (e.g., .NET `ExtractEmbeddingResponse`).
+
+### Request Body (JSON)
+```json
+{
+  "image_base64": "<whole_scene_image_base64>"
+}
+```
+
+### Response (200 OK - Live Face)
+```json
+{
+  "embedding": [
+    0.0470, 0.0164, -0.0009, 0.0051, -0.0278, ...
+  ]
+}
+```
+
+### Response (400 Bad Request - Spoof Attack Detected)
+```json
+{
+  "detail": "Liveness check failed: Spoof attack detected (replay). Real face confidence: 0.0026 < 0.60 threshold."
+}
+```
+
+### cURL Example (File Upload)
+```bash
+curl -X POST "http://localhost:8000/api/v1/embedding/live/file" \
+     -H "accept: application/json" \
+     -F "file=@Data/Anti_Spoofing/real/real_1.jpg;type=image/jpeg"
 ```
 
 ---
