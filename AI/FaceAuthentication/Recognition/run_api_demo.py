@@ -1,14 +1,21 @@
 """
 Demonstration Script: Simulates/Fakes real API requests to the Face Recognition Service
-using local images from the Data/ directory.
+using modular dataset splits: Detection/, Recognition/, Anti_Spoofing/.
 """
 
 import base64
 from pathlib import Path
 from fastapi.testclient import TestClient
 
+from Data.download_datasets import ensure_datasets
 from src.api.app import app
-from src.config import DATA_DIR, FACE_DIR
+from src.config import (
+    ANTISPOOFING_DATA_DIR,
+    DATA_DIR,
+    DETECTION_DATA_DIR,
+    FACE_DIR,
+    RECOGNITION_DATA_DIR,
+)
 
 
 def encode_file_to_base64(filepath: Path) -> str:
@@ -19,8 +26,11 @@ def encode_file_to_base64(filepath: Path) -> str:
 
 def run_demo():
     print("=" * 80)
-    print("   FACE RECOGNITION API CLIENT SIMULATION / DEMO")
+    print("   FACE RECOGNITION & AUTHENTICATION API CLIENT SIMULATION / DEMO")
     print("=" * 80)
+
+    # Ensure dataset splits and sample images exist
+    ensure_datasets()
 
     # Use FastAPI TestClient for in-process request simulation without needing external server
     with TestClient(app) as client:
@@ -32,26 +42,23 @@ def run_demo():
         print(f"Response ({resp.status_code}): {resp.json()}")
 
         # ----------------------------------------------------------------------
-        # 1. Detection Request (Multipart File Upload)
+        # 1. Detection Request (Multipart File Upload with Multi-Face sample)
         # ----------------------------------------------------------------------
-        duke_img_path = DATA_DIR / "duke" / "duke.jpg"
-        print(f"\n[API Call 1] POST /api/v1/detect/file (Multipart Upload: {duke_img_path.name})")
-        with open(duke_img_path, "rb") as f:
-            resp = client.post("/api/v1/detect/file", files={"file": ("duke.jpg", f, "image/jpeg")})
+        det_img_path = DETECTION_DATA_DIR / "multi_face" / "multi_face_1.jpg"
+        print(f"\n[API Call 1] POST /api/v1/detect/file (Multipart Upload: {det_img_path.name})")
+        with open(det_img_path, "rb") as f:
+            resp = client.post("/api/v1/detect/file", files={"file": (det_img_path.name, f, "image/jpeg")})
         
         print(f"Status Code: {resp.status_code}")
         det_data = resp.json()
         print(f"Faces Detected: {det_data['face_count']}")
-        if det_data["faces"]:
-            face = det_data["faces"][0]
-            print(f"  Confidence: {face['confidence']:.4f}")
-            print(f"  Bounding Box: {face['bbox']}")
-            print(f"  Landmarks Count: {len(face['keypoints'])} ({[kp['name'] for kp in face['keypoints']]})")
+        for idx, face in enumerate(det_data["faces"]):
+            print(f"  Face #{idx + 1}: Confidence={face['confidence']:.4f}, BBox={face['bbox']}")
 
         # ----------------------------------------------------------------------
         # 2. Crop & Alignment Request (Base64 JSON Payload)
         # ----------------------------------------------------------------------
-        leon_img_path = DATA_DIR / "leon" / "leon.jpg"
+        leon_img_path = RECOGNITION_DATA_DIR / "leon" / "leon.jpg"
         print(f"\n[API Call 2] POST /api/v1/crop (Base64 JSON: {leon_img_path.name})")
         leon_b64 = encode_file_to_base64(leon_img_path)
         resp = client.post("/api/v1/crop", json={"image_base64": leon_b64})
@@ -73,7 +80,7 @@ def run_demo():
         # ----------------------------------------------------------------------
         # 3. Embedding Request (Base64 JSON Payload)
         # ----------------------------------------------------------------------
-        kyle_img_path = DATA_DIR / "kyle" / "kyle.jpg"
+        kyle_img_path = RECOGNITION_DATA_DIR / "kyle" / "kyle.jpg"
         print(f"\n[API Call 3] POST /api/v1/embedding (Extract 512-D ArcFace Embedding)")
         kyle_b64 = encode_file_to_base64(kyle_img_path)
         resp = client.post("/api/v1/embedding", json={"image_base64": kyle_b64})
@@ -84,28 +91,32 @@ def run_demo():
         print(f"First 5 Vector Values: {[round(v, 4) for v in emb_data['embedding'][:5]]}...")
 
         # ----------------------------------------------------------------------
-        # 4. Anti-Spoofing & Liveness Check (MiniFASNetV2)
+        # 4. Anti-Spoofing & Liveness Checks (Real Face vs Spoof Attack)
         # ----------------------------------------------------------------------
-        print(f"\n[API Call 4] POST /api/v1/liveness (Anti-Spoofing on Kyle: {kyle_img_path.name})")
-        resp = client.post("/api/v1/liveness", json={"image_base64": kyle_b64})
-        print(f"Status Code: {resp.status_code}")
-        liveness_data = resp.json()
-        print(f"Face Count: {liveness_data['face_count']}")
-        if liveness_data["liveness"]:
-            liv = liveness_data["liveness"]
-            print(f"  Is Real: {liv['is_real']} ({liv['label']})")
-            print(f"  Confidence: {liv['confidence']:.4f}")
-            print(f"  Raw Probabilities [Print, Real, Replay]: {liv['raw_scores']}")
+        real_img_path = ANTISPOOFING_DATA_DIR / "real" / "real_1.jpg"
+        print(f"\n[API Call 4A] POST /api/v1/liveness (Live Human Face: {real_img_path.name})")
+        resp_real = client.post("/api/v1/liveness", json={"image_base64": encode_file_to_base64(real_img_path)})
+        print(f"Status Code: {resp_real.status_code}")
+        liv_real = resp_real.json()["liveness"]
+        print(f"  Is Real: {liv_real['is_real']} ({liv_real['label']}) | Confidence: {liv_real['confidence']:.4f}")
+
+        spoof_img_path = ANTISPOOFING_DATA_DIR / "spoof" / "spoof_replay_1.jpg"
+        print(f"\n[API Call 4B] POST /api/v1/liveness (Screen Replay Spoof Attack: {spoof_img_path.name})")
+        resp_spoof = client.post("/api/v1/liveness", json={"image_base64": encode_file_to_base64(spoof_img_path)})
+        print(f"Status Code: {resp_spoof.status_code}")
+        liv_spoof = resp_spoof.json()["liveness"]
+        print(f"  Is Real: {liv_spoof['is_real']} ({liv_spoof['label']}) | Attack: {liv_spoof['attack_type']} | Confidence: {liv_spoof['confidence']:.4f}")
 
         # ----------------------------------------------------------------------
         # 5. 1:1 Verification (Matching vs Mismatching pairs with Liveness)
         # ----------------------------------------------------------------------
-        duke1_path = DATA_DIR / "duke" / "duke1.jpg"
+        duke_path = RECOGNITION_DATA_DIR / "duke" / "duke.jpg"
+        duke1_path = RECOGNITION_DATA_DIR / "duke" / "duke1.jpg"
         print("\n[API Call 5A] POST /api/v1/verify (Matching Pair: Duke vs Duke1)")
         resp = client.post(
             "/api/v1/verify",
             json={
-                "image1_base64": encode_file_to_base64(duke_img_path),
+                "image1_base64": encode_file_to_base64(duke_path),
                 "image2_base64": encode_file_to_base64(duke1_path),
                 "threshold": 0.40,
                 "check_liveness": True,
@@ -118,7 +129,7 @@ def run_demo():
         resp = client.post(
             "/api/v1/verify",
             json={
-                "image1_base64": encode_file_to_base64(duke_img_path),
+                "image1_base64": encode_file_to_base64(duke_path),
                 "image2_base64": encode_file_to_base64(kyle_img_path),
                 "threshold": 0.40,
                 "check_liveness": True,
@@ -132,7 +143,7 @@ def run_demo():
         # ----------------------------------------------------------------------
         print("\n[API Call 6A] POST /api/v1/enroll (Enrolling Duke, Kyle, Leon into Gallery)")
         for person in ["duke", "kyle", "leon"]:
-            photos = list((DATA_DIR / person).glob("*.jpg"))[:2]  # Enroll with first 2 photos
+            photos = list((RECOGNITION_DATA_DIR / person).glob("*.jpg"))[:2]
             b64_photos = [encode_file_to_base64(p) for p in photos]
             resp = client.post(
                 "/api/v1/enroll",
@@ -141,7 +152,7 @@ def run_demo():
             print(f"  Enrolled '{person}': {resp.json()['status']} with {resp.json()['enrolled_images_count']} photos.")
 
         # Query with unseen probe image (leon3.jpg)
-        probe_path = DATA_DIR / "leon" / "leon3.jpg"
+        probe_path = RECOGNITION_DATA_DIR / "leon" / "leon3.jpg"
         print(f"\n[API Call 6B] POST /api/v1/identify (Probe Query with {probe_path.name})")
         resp = client.post(
             "/api/v1/identify",

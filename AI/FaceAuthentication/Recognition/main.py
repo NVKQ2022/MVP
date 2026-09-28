@@ -15,11 +15,14 @@ if str(PROJECT_ROOT) not in sys.path:
 import uvicorn
 
 from src.config import (
+    ANTISPOOFING_DATA_DIR,
     API_HOST,
     API_PORT,
     DATA_DIR,
     DEFAULT_SIMILARITY_THRESHOLD,
+    DETECTION_DATA_DIR,
     FACE_DIR,
+    RECOGNITION_DATA_DIR,
     USE_ALIGNMENT,
 )
 from src.services.orchestrator import FaceRecognitionService
@@ -169,12 +172,11 @@ def main():
     service = FaceRecognitionService(default_threshold=args.threshold)
     try:
         if args.action == "verify":
-            if not args.img1 or not args.img2:
-                print("Error: --img1 and --img2 are required for verify action.")
-                sys.exit(1)
-            result = service.verify(args.img1, args.img2, threshold=args.threshold)
-            print(f"Image 1: {args.img1}")
-            print(f"Image 2: {args.img2}")
+            img1 = args.img1 or (RECOGNITION_DATA_DIR / "duke" / "duke.jpg")
+            img2 = args.img2 or (RECOGNITION_DATA_DIR / "duke" / "duke1.jpg")
+            result = service.verify(img1, img2, threshold=args.threshold)
+            print(f"Image 1: {img1}")
+            print(f"Image 2: {img2}")
             print(f"Similarity Score: {result.similarity_score:.4f} (Threshold: {result.threshold:.2f})")
             print(f"Decision: {result.status}")
             if result.liveness1:
@@ -182,11 +184,9 @@ def main():
             if result.liveness2:
                 print(f"Image 2 Liveness: {result.liveness2.label} ({result.liveness2.confidence:.4f})")
         elif args.action == "liveness":
-            if not args.img1:
-                print("Error: --img1 is required for liveness action.")
-                sys.exit(1)
-            result = service.check_liveness(args.img1)
-            print(f"Image: {args.img1}")
+            img1 = args.img1 or (ANTISPOOFING_DATA_DIR / "real" / "real_1.jpg")
+            result = service.check_liveness(img1)
+            print(f"Image: {img1}")
             print(f"Face Count: {result.face_count}")
             if result.liveness:
                 print(f"Status: {result.liveness.label}")
@@ -198,7 +198,7 @@ def main():
             else:
                 print(f"Details: {result.details}")
         else:
-            run_cli_pipeline(service, DATA_DIR, FACE_DIR)
+            run_cli_pipeline(service, RECOGNITION_DATA_DIR, FACE_DIR)
     finally:
         service.close()
 

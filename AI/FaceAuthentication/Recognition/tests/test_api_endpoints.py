@@ -1,5 +1,6 @@
 """
 Automated Test Suite for Face Authentication & Recognition API.
+Uses modular dataset splits: Detection/, Recognition/, Anti_Spoofing/.
 """
 
 import base64
@@ -7,13 +8,25 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from Data.download_datasets import ensure_datasets
 from src.api.app import app
-from src.config import DATA_DIR
+from src.config import (
+    ANTISPOOFING_DATA_DIR,
+    DATA_DIR,
+    DETECTION_DATA_DIR,
+    RECOGNITION_DATA_DIR,
+)
 
 
 def encode_file_to_base64(filepath: Path) -> str:
     with open(filepath, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_dataset():
+    """Ensures test datasets and placeholders are available."""
+    ensure_datasets()
 
 
 @pytest.fixture(scope="module")
@@ -29,17 +42,26 @@ def test_health_endpoint(client):
 
 
 def test_detect_file_endpoint(client):
-    img_path = DATA_DIR / "duke" / "duke.jpg"
+    img_path = DETECTION_DATA_DIR / "single_face" / "single_face_1.jpg"
     with open(img_path, "rb") as f:
-        response = client.post("/api/v1/detect/file", files={"file": ("duke.jpg", f, "image/jpeg")})
+        response = client.post("/api/v1/detect/file", files={"file": ("single_face_1.jpg", f, "image/jpeg")})
     assert response.status_code == 200
     data = response.json()
     assert data["face_count"] >= 1
     assert data["faces"][0]["confidence"] > 0.80
 
 
+def test_detect_multi_face_endpoint(client):
+    img_path = DETECTION_DATA_DIR / "multi_face" / "multi_face_1.jpg"
+    with open(img_path, "rb") as f:
+        response = client.post("/api/v1/detect/file", files={"file": ("multi_face_1.jpg", f, "image/jpeg")})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["face_count"] >= 2
+
+
 def test_crop_json_endpoint(client):
-    img_path = DATA_DIR / "leon" / "leon.jpg"
+    img_path = RECOGNITION_DATA_DIR / "leon" / "leon.jpg"
     b64 = encode_file_to_base64(img_path)
     response = client.post("/api/v1/crop", json={"image_base64": b64})
     assert response.status_code == 200
@@ -50,7 +72,7 @@ def test_crop_json_endpoint(client):
 
 
 def test_embedding_endpoint(client):
-    img_path = DATA_DIR / "kyle" / "kyle.jpg"
+    img_path = RECOGNITION_DATA_DIR / "kyle" / "kyle.jpg"
     b64 = encode_file_to_base64(img_path)
     response = client.post("/api/v1/embedding", json={"image_base64": b64})
     assert response.status_code == 200
@@ -59,10 +81,34 @@ def test_embedding_endpoint(client):
     assert len(data["embedding"]) == 512
 
 
+def test_liveness_real_face_endpoint(client):
+    img_path = ANTISPOOFING_DATA_DIR / "real" / "real_1.jpg"
+    with open(img_path, "rb") as f:
+        response = client.post("/api/v1/liveness/file", files={"file": ("real_1.jpg", f, "image/jpeg")})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["face_count"] >= 1
+    assert data["liveness"]["is_real"] is True
+    assert data["liveness"]["label"] == "Real"
+    assert data["liveness"]["confidence"] > 0.60
+    assert len(data["liveness"]["raw_scores"]) == 3
+
+
+def test_liveness_spoof_attack_endpoint(client):
+    img_path = ANTISPOOFING_DATA_DIR / "spoof" / "spoof_replay_1.jpg"
+    b64 = encode_file_to_base64(img_path)
+    response = client.post("/api/v1/liveness", json={"image_base64": b64})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["face_count"] == 1
+    assert data["liveness"]["is_real"] is False
+    assert data["liveness"]["label"] == "Spoof"
+
+
 def test_verification_match_and_mismatch(client):
-    duke = encode_file_to_base64(DATA_DIR / "duke" / "duke.jpg")
-    duke1 = encode_file_to_base64(DATA_DIR / "duke" / "duke1.jpg")
-    kyle = encode_file_to_base64(DATA_DIR / "kyle" / "kyle.jpg")
+    duke = encode_file_to_base64(RECOGNITION_DATA_DIR / "duke" / "duke.jpg")
+    duke1 = encode_file_to_base64(RECOGNITION_DATA_DIR / "duke" / "duke1.jpg")
+    kyle = encode_file_to_base64(RECOGNITION_DATA_DIR / "kyle" / "kyle.jpg")
 
     # Match test
     match_resp = client.post(
@@ -81,33 +127,9 @@ def test_verification_match_and_mismatch(client):
     assert mismatch_resp.json()["match"] is False
 
 
-def test_liveness_file_endpoint(client):
-    img_path = DATA_DIR / "duke" / "duke.jpg"
-    with open(img_path, "rb") as f:
-        response = client.post("/api/v1/liveness/file", files={"file": ("duke.jpg", f, "image/jpeg")})
-    assert response.status_code == 200
-    data = response.json()
-    assert data["face_count"] >= 1
-    assert data["liveness"]["is_real"] is True
-    assert data["liveness"]["label"] == "Real"
-    assert data["liveness"]["confidence"] > 0.60
-    assert len(data["liveness"]["raw_scores"]) == 3
-
-
-def test_liveness_json_endpoint(client):
-    img_path = DATA_DIR / "leon" / "leon.jpg"
-    b64 = encode_file_to_base64(img_path)
-    response = client.post("/api/v1/liveness", json={"image_base64": b64})
-    assert response.status_code == 200
-    data = response.json()
-    assert data["face_count"] == 1
-    assert data["liveness"]["is_real"] is True
-    assert data["liveness"]["confidence"] > 0.60
-
-
 def test_verification_with_liveness(client):
-    duke = encode_file_to_base64(DATA_DIR / "duke" / "duke.jpg")
-    duke1 = encode_file_to_base64(DATA_DIR / "duke" / "duke1.jpg")
+    duke = encode_file_to_base64(RECOGNITION_DATA_DIR / "duke" / "duke.jpg")
+    duke1 = encode_file_to_base64(RECOGNITION_DATA_DIR / "duke" / "duke1.jpg")
 
     resp = client.post(
         "/api/v1/verify",
@@ -124,12 +146,12 @@ def test_verification_with_liveness(client):
 
 def test_enrollment_and_identification(client):
     for person in ["duke", "kyle", "leon"]:
-        photos = [encode_file_to_base64(p) for p in list((DATA_DIR / person).glob("*.jpg"))[:2]]
+        photos = [encode_file_to_base64(p) for p in list((RECOGNITION_DATA_DIR / person).glob("*.jpg"))[:2]]
         res = client.post("/api/v1/enroll", json={"person_id": person, "images_base64": photos, "check_liveness": True})
         assert res.status_code == 200
         assert res.json()["status"] == "ENROLLED"
 
-    probe = encode_file_to_base64(DATA_DIR / "leon" / "leon3.jpg")
+    probe = encode_file_to_base64(RECOGNITION_DATA_DIR / "leon" / "leon3.jpg")
     id_resp = client.post("/api/v1/identify", json={"image_base64": probe, "top_k": 3, "threshold": 0.40, "check_liveness": True})
     assert id_resp.status_code == 200
     data = id_resp.json()

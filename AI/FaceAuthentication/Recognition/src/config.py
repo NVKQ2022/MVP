@@ -8,6 +8,9 @@ from pathlib import Path
 # Base Paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "Data"
+DETECTION_DATA_DIR = DATA_DIR / "Detection"
+RECOGNITION_DATA_DIR = DATA_DIR / "Recognition"
+ANTISPOOFING_DATA_DIR = DATA_DIR / "Anti_Spoofing"
 FACE_DIR = PROJECT_ROOT / "Face"
 MODELS_DIR = PROJECT_ROOT / "models"
 LIBS_DIR = PROJECT_ROOT / "libs" / "usr" / "lib" / "x86_64-linux-gnu"
