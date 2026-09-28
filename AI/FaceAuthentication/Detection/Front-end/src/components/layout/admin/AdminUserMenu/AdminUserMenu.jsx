@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 export function AdminUserMenu({ onLogout }) {
   const navigate = useNavigate();
   const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile', 'me'],
     queryFn: async () => {
       const { data } = await apiClient.get('/api/v1/users/me');
       return data;
