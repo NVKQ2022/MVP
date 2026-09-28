@@ -1,33 +1,71 @@
 import axios from 'axios';
 import { env } from '@/config/env';
-import { appConfig } from '@/config/appConfig';
+import { authStore } from '@/features/auth/auth.store';
 
 const apiClient = axios.create({
   baseURL: env.apiBaseUrl,
   timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Future: attach Authorization header once real auth exists.
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem(appConfig.tokenStorageKey);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
+apiClient.interceptors.request.use((config) => {
+  const { accessToken } = authStore.getSnapshot();
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return config;
+});
 
-// Future: centralize error handling (401 redirect, toast, refresh token, etc.)
+let isRefreshing = false;
+let pendingQueue = [];
+
+function flushQueue(error, token = null) {
+  pendingQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve(token)));
+  pendingQueue = [];
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Placeholder for future global error handling.
-    return Promise.reject(error);
+  async (error) => {
+    const originalRequest = error.config;
+    const status = error.response?.status;
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/');
+
+    if (status !== 401 || originalRequest._retry || isAuthEndpoint) {
+      return Promise.reject(error);
+    }
+
+    const { refreshToken } = authStore.getSnapshot();
+    if (!refreshToken) {
+      authStore.clear();
+      return Promise.reject(error);
+    }
+
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        pendingQueue.push({ resolve, reject });
+      }).then((newToken) => {
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return apiClient(originalRequest);
+      });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+      const { data } = await axios.post(`${env.apiBaseUrl}/auth/refresh`, { refreshToken });
+      authStore.setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+      flushQueue(null, data.accessToken);
+      originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+      return apiClient(originalRequest);
+    } catch (refreshError) {
+      flushQueue(refreshError, null);
+      authStore.clear();
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
   },
 );
 

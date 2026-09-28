@@ -1,12 +1,15 @@
 import { TooltipProvider } from '@/components/ui/tooltip/tooltip';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
+import { AuthInitializer } from '@/features/auth';
 
 export function AppProvider({ children }) {
   return (
     <ThemeProvider>
       <QueryProvider>
-        <TooltipProvider>{children}</TooltipProvider>
+        <AuthInitializer>
+          <TooltipProvider>{children}</TooltipProvider>
+        </AuthInitializer>
       </QueryProvider>
     </ThemeProvider>
   );

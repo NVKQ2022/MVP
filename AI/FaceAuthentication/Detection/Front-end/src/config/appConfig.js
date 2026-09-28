@@ -1,7 +1,8 @@
 export const appConfig = {
   appName: 'EduPortal',
   defaultPageSize: 10,
-  tokenStorageKey: 'auth_token',
+  tokenStorageKey: 'auth_access_token',
+  refreshTokenStorageKey: 'auth_refresh_token',
   themeStorageKey: 'app_theme',
-  authStorageKey: 'mock_auth_user',
+  authStorageKey: 'auth_user',
 };

@@ -1,103 +1,136 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select/select';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card/card';
 import { Badge } from '@/components/ui/badge/badge';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAdminUsersQuery } from '@/features/AdminUsers';
+import { formatDate } from '@/utils/formatDate';
+import { PageHeader } from '@/components/common/PageHeader';
 
-import { mockUsers } from '@/features/users/mock-data';
+const PAGE_SIZE = 5;
+const ROLE = {
+  ADMIN: '11111111-1111-1111-1111-111111111111',
+  STUDENT: '22222222-2222-2222-2222-222222222222',
+};
 
 export default function AdminDashboard() {
-  // const [displayedAdmins, setDisplayedAdmins] = useState(3);
   const navigate = useNavigate();
 
-  const totalUsers = mockUsers.length;
+  // separate queries — one for stats (all users), one for admin list
+  const { data: allData } = useAdminUsersQuery({
+    page: 1,
+    pageSize: 1, // just need totalCount, not the items
+  });
 
-  const activeUsers = mockUsers.filter((user) => user.status === 'active').length;
+  const [adminPage, setAdminPage] = useState(1);
+  const { data: adminData, isLoading: adminLoading } = useAdminUsersQuery({
+    page: adminPage,
+    pageSize: PAGE_SIZE,
+    roleId: ROLE.ADMIN,
+  });
 
-  const otherStateUsers = mockUsers.filter((user) => user.status !== 'inactive').length;
+  const { data: activeData } = useAdminUsersQuery({
+    page: 1,
+    pageSize: 1,
+    isActive: true,
+  });
 
-  const admins = mockUsers.filter((user) => user.role === 'Admin');
+  const { data: inactiveData } = useAdminUsersQuery({
+    page: 1,
+    pageSize: 1,
+    isActive: false,
+  });
 
-  // .slice(0, displayedAdmins)
+  const totalUsers = allData?.totalCount ?? 0;
+  const activeUsers = activeData?.totalCount ?? 0;
+  const inactiveUsers = inactiveData?.totalCount ?? 0;
+  const adminItems = adminData?.items ?? [];
+
   return (
-    <div className="space-y-6 p-8">
+    <div className="dashboard_style">
+      <PageHeader
+        title="Dashboard"
+        description="Quick glance at the system status"
+      />
       {/* Statistics */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="cursor-pointer hover:bg-muted" onClick={() => navigate('/users')}>
+      <div className="admin_dashboard_stats">
+        <Card
+          className="admin_dashboard_stats_element"
+          onClick={() => navigate('/users')}
+        >
           <CardHeader>
             <CardTitle>Total Users</CardTitle>
           </CardHeader>
-
           <CardContent>
-            <p className="text-3xl font-bold">{totalUsers}</p>
+            <p className="admin_dashboard_stats_element_content">
+              {totalUsers}
+            </p>
           </CardContent>
         </Card>
 
         <Card
-          className="cursor-pointer hover:bg-muted"
-          onClick={() => navigate('/users?status=active')}
+          className="admin_dashboard_stats_element"
+          onClick={() => navigate('/users?isActive=true')}
         >
           <CardHeader>
             <CardTitle>Active Users</CardTitle>
           </CardHeader>
-
           <CardContent>
-            <p className="text-3xl font-bold">{activeUsers}</p>
+            <p className="admin_dashboard_stats_element_content">
+              {activeUsers}
+            </p>
           </CardContent>
         </Card>
 
         <Card
-          className="cursor-pointer hover:bg-muted"
-          onClick={() => navigate('/users?status=non-active')}
+          className="admin_dashboard_stats_element"
+          onClick={() => navigate('/users?isActive=false')}
         >
           <CardHeader>
-            <CardTitle>Users of other states</CardTitle>
+            <CardTitle>Inactive Users</CardTitle>
           </CardHeader>
-
           <CardContent>
-            <p className="text-3xl font-bold">{otherStateUsers}</p>
+            <p className="admin_dashboard_stats_element_content">
+              {inactiveUsers}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent users */}
+      {/* Administrators list */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="admin_dashboard_admin_list_title">
           <CardTitle>Administrators</CardTitle>
         </CardHeader>
-
         <CardContent>
-          {admins.length === 0 ? (
-            <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-              No users registered
+          {adminLoading ? (
+            <div>Loading...</div>
+          ) : adminItems.length === 0 ? (
+            <div className="admin_dashboard_admin_list_empty_indicate">
+              No administrators found
             </div>
           ) : (
-            <div className="space-y-2">
-              {admins.map((user) => (
+            <div className="admin_dashboard_admin_list_nonempty">
+              {adminItems.map((user) => (
                 <div
                   key={user.id}
-                  className="flex cursor-pointer items-center justify-between rounded-md p-3 hover:bg-muted"
+                  className="admin_dashboard_admin_list_element"
                   onClick={() => navigate(`/users/${user.id}`)}
                 >
                   <div>
-                    <p className="font-medium">{user.name}</p>
-
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <p className="admin_dashboard_admin_name">
+                      {user.userName}
+                    </p>
+                    <p className="admin_dashboard_admin_email">
+                      {user.email}
+                    </p>
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
-                      {user.status}
+                  <div className="admin_dashboard_admin_right_info">
+                    <Badge variant={user.isActive ? 'default' : 'secondary'}>
+                      {user.isActive ? 'Active' : 'Inactive'}
                     </Badge>
-
-                    <p className="text-sm text-muted-foreground">{user.createdAt}</p>
+                    <p className="admin_dashboard_admin_created_at">
+                      {formatDate(user.createdAt)}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -105,6 +138,7 @@ export default function AdminDashboard() {
           )}
         </CardContent>
       </Card>
+
     </div>
   );
 }

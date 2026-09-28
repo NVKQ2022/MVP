@@ -1,84 +1,172 @@
-import { useRef } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import AnnouncementForm from './AnnouncementForm';
-import { announcementsData } from '@/data/announcementsData';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Pencil, CalendarDays, User } from 'lucide-react';
 import { Button } from '@/components/ui/button/button';
-import { Upload } from 'lucide-react';
+import { Badge } from '@/components/ui/badge/badge';
+import { Separator } from '@/components/ui/separator/separator';
+import { Skeleton } from '@/components/ui/skeleton/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area/scroll-area';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@/components/ui/card/card';
+import { ErrorState } from '@/components/common/ErrorState';
+import { useAnnouncementQuery } from '@/features/AdminAnnouncement';
 
-const AdminAnnouncementDetail = () => {
+const STATUS_LABEL = {
+  Published: { label: 'Published', variant: 'default' },
+  Draft: { label: 'Draft', variant: 'outline' },
+  Archived: { label: 'Archived', variant: 'secondary' },
+};
+
+const formatAudience = (audience) => (audience == null ? null : String(audience));
+
+const formatDate = (value) =>
+  value
+    ? new Date(value).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+
+const AnnouncementDetail = () => {
   const { id } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
 
-  const announcement = id
-    ? (location.state?.announcement ?? announcementsData.find((a) => a.id === id))
-    : undefined;
+  const { data, isLoading, isError, refetch } = useAnnouncementQuery(id);
 
-  const isEditMode = Boolean(announcement);
+  const handleBack = () => navigate('/announcements');
+  const handleEdit = () => navigate(`/announcements/edit/${id}`);
 
-  const handleSubmit = (values) => {
-    if (isEditMode) {
-      console.log('update announcement', values);
-      // TODO: call your update API here, e.g. updateAnnouncement(values.id, values)
-    } else {
-      console.log('create announcement', values);
-      // TODO: call your create API here, e.g. createAnnouncement(values)
-    }
-    navigate('/announcements');
-  };
-
-  const handleCancel = () => navigate('/announcements');
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    console.log('import from file', file);
-    // TODO: parse/upload the selected file and populate the form fields
-
-    // reset input so selecting the same file again still fires onChange
-    e.target.value = '';
-  };
-
-  if (id && !announcement) {
-    return <p className="announcement-detail__not-found">Announcement not found.</p>;
+  if (isError) {
+    return (
+      <div className="announcement-detail">
+        <div className="announcement-detail__toolbar">
+          <Button variant="ghost" size="sm" onClick={handleBack}>
+            <ArrowLeft className="announcement-detail__btn-icon" />
+            Back
+          </Button>
+        </div>
+        <ErrorState
+          title="Failed to load announcement"
+          description="We couldn't load this announcement. Please try again."
+          onRetry={refetch}
+        />
+      </div>
+    );
   }
+
+  if (isLoading) {
+    return (
+      <div className="announcement-detail">
+        <div className="announcement-detail__toolbar">
+          <Button variant="ghost" size="sm" onClick={handleBack}>
+            <ArrowLeft className="announcement-detail__btn-icon" />
+            Back
+          </Button>
+        </div>
+        <Card className="announcement-detail__card">
+          <CardHeader>
+            <Skeleton className="announcement-detail__skeleton-title" />
+            <Skeleton className="announcement-detail__skeleton-meta" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="announcement-detail__skeleton-line" />
+            <Skeleton className="announcement-detail__skeleton-line" />
+            <Skeleton className="announcement-detail__skeleton-line announcement-detail__skeleton-line--short" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const {
+    title,
+    content,
+    audience,
+    publicationStatus,
+    creatorName,
+    publishedAt,
+    createdAt,
+    updatedAt,
+  } = data ?? {};
+
+  const statusInfo = STATUS_LABEL[publicationStatus] ?? {
+    label: publicationStatus ?? '-',
+    variant: 'default',
+  };
+  const audienceLabel = formatAudience(audience);
+  const isDraft = publicationStatus === 'DRAFT';
 
   return (
     <div className="announcement-detail">
-      <div className="announcement-detail__header">
-        <h1 className="announcement-detail__title">
-          {isEditMode ? 'Update Announcement' : 'Create Announcement'}
-        </h1>
-
-        {!isEditMode && (
-          <>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="announcement-detail__file-input"
-              onChange={handleFileChange}
-            />
-            <Button variant="outline" size="sm" onClick={handleImportClick}>
-              <Upload className="announcement-detail__btn-icon" />
-              Import from file
-            </Button>
-          </>
+      <div className="announcement-detail__toolbar">
+        <Button variant="ghost" size="sm" onClick={handleBack}>
+          <ArrowLeft className="announcement-detail__btn-icon" />
+          Back
+        </Button>
+        {isDraft && (
+          <Button size="sm" onClick={handleEdit}>
+            <Pencil className="announcement-detail__btn-icon" />
+            Edit
+          </Button>
         )}
       </div>
 
-      <AnnouncementForm
-        announcement={announcement}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-      />
+      <Card className="announcement-detail__card">
+        <CardHeader className="announcement-detail__header">
+          <div className="announcement-detail__header-top">
+            <CardTitle className="announcement-detail__title">{title}</CardTitle>
+            <div className="announcement-detail__badges">
+              <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+              {audienceLabel && <Badge variant="outline">{audienceLabel}</Badge>}
+            </div>
+          </div>
+
+          <div className="announcement-detail__meta">
+            {creatorName && (
+              <span className="announcement-detail__meta-item">
+                <User className="announcement-detail__meta-icon" />
+                {creatorName}
+              </span>
+            )}
+            {publishedAt && (
+              <span className="announcement-detail__meta-item">
+                <CalendarDays className="announcement-detail__meta-icon" />
+                Published {formatDate(publishedAt)}
+              </span>
+            )}
+            {!publishedAt && createdAt && (
+              <span className="announcement-detail__meta-item">
+                <CalendarDays className="announcement-detail__meta-icon" />
+                Created {formatDate(createdAt)}
+              </span>
+            )}
+            {updatedAt && (
+              <span className="announcement-detail__meta-item announcement-detail__meta-item--muted">
+                Last updated {formatDate(updatedAt)}
+              </span>
+            )}
+          </div>
+        </CardHeader>
+
+        <Separator />
+
+        <CardContent className="announcement-detail__content">
+          <ScrollArea className="announcement-detail__scroll">
+            <div
+              className="announcement-detail__body"
+              dangerouslySetInnerHTML={{ __html: content ?? '' }}
+            />
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default AdminAnnouncementDetail;
+export default AnnouncementDetail;

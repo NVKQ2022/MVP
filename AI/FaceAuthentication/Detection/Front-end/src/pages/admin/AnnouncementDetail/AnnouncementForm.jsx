@@ -31,16 +31,12 @@ import {
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  category: z.string().min(1, 'Category is required'),
-  author: z.string().min(1, 'Author is required'),
-  postedDate: z.string().min(1, 'Posted date is required'),
-  priority: z.enum(['low', 'medium', 'high']),
-  status: z.enum(['draft', 'published', 'archived']),
-  details: z.string().min(1, 'Details are required'),
+  content: z.string().min(1, 'Content is required'),
+  audience: z.enum(['PUBLIC', 'STUDENT']),
 });
 
 /**
- * @param announcement  Existing announcement object (edit mode). Omit/undefined for create mode.
+ * @param announcement  Existing announcement object (edit mode) — { id, title, content, audience }. Omit/undefined for create mode.
  * @param onSubmit       (values) => void — values include `id` when editing
  * @param onCancel       optional () => void — renders a Cancel button when provided
  * @param submitting     boolean — disables the submit button while a save is in flight
@@ -53,12 +49,8 @@ const AnnouncementForm = ({ announcement, onSubmit, onCancel, submitting = false
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: announcement?.title ?? '',
-      category: announcement?.category ?? '',
-      author: announcement?.author ?? '',
-      postedDate: announcement?.postedDate ?? '',
-      priority: announcement?.priority ?? 'medium',
-      status: announcement?.status ?? 'draft',
-      details: announcement?.details ?? '',
+      content: announcement?.content ?? '',
+      audience: announcement?.audience ?? 'PUBLIC',
     },
   });
 
@@ -103,112 +95,39 @@ const AnnouncementForm = ({ announcement, onSubmit, onCancel, submitting = false
               )}
             />
 
-            <div className="announcement-form__grid-2">
-              <Controller
-                name="category"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={`${formId}-category`}>Category</FieldLabel>
-                    <Input
-                      {...field}
-                      id={`${formId}-category`}
-                      aria-invalid={fieldState.invalid}
-                      placeholder="e.g. Exam, Finance, Event"
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="author"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={`${formId}-author`}>Posted by</FieldLabel>
-                    <Input
-                      {...field}
-                      id={`${formId}-author`}
-                      aria-invalid={fieldState.invalid}
-                      placeholder="e.g. Academic Affairs Office"
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            </div>
-
-            <div className="announcement-form__grid-3">
-              <Controller
-                name="postedDate"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={`${formId}-postedDate`}>Posted date</FieldLabel>
-                    <Input
-                      {...field}
-                      id={`${formId}-postedDate`}
-                      type="date"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="priority"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={`${formId}-priority`}>Priority</FieldLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger id={`${formId}-priority`} aria-invalid={fieldState.invalid}>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="status"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={`${formId}-status`}>Status</FieldLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger id={`${formId}-status`} aria-invalid={fieldState.invalid}>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="archived">Archived</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            </div>
-
             <Controller
-              name="details"
+              name="audience"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`${formId}-details`}>Details</FieldLabel>
+                  <FieldLabel htmlFor={`${formId}-audience`}>Audience</FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger
+                      id={`${formId}-audience`}
+                      aria-invalid={fieldState.invalid}
+                      className="announcement-form__audience-trigger"
+                    >
+                      <SelectValue placeholder="Select audience" />
+                    </SelectTrigger>
+                    <SelectContent className="announcement-form__audience-content">
+                      <SelectItem value="PUBLIC">Public</SelectItem>
+                      <SelectItem value="STUDENT">Student</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="content"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={`${formId}-content`}>Content</FieldLabel>
                   <Textarea
                     {...field}
-                    id={`${formId}-details`}
+                    id={`${formId}-content`}
                     aria-invalid={fieldState.invalid}
                     placeholder="Full announcement content..."
                     className="announcement-form__details-textarea"
