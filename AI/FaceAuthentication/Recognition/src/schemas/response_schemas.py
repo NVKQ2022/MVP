@@ -51,6 +51,23 @@ class EmbeddingResponse(BaseModel):
     embedding: List[float]
 
 
+class LivenessDTO(BaseModel):
+    """Face Anti-Spoofing and Liveness estimation result."""
+    is_real: bool = Field(..., description="True if real live human face, False if spoof attack")
+    confidence: float = Field(..., description="Probability of live face [0.0, 1.0]")
+    label: str = Field(..., description="'Real' or 'Spoof'")
+    attack_type: Optional[str] = Field(None, description="Attack classification ('print', 'replay', or None)")
+    raw_scores: Optional[List[float]] = Field(None, description="Class probabilities [Print, Real, Replay]")
+
+
+class LivenessResponse(BaseModel):
+    """Response returned by Face Anti-Spoofing endpoint."""
+    success: bool = True
+    face_count: int
+    liveness: Optional[LivenessDTO] = None
+    details: Optional[str] = None
+
+
 class VerifyResponse(BaseModel):
     """1:1 Verification decision response."""
     success: bool = True
@@ -58,6 +75,8 @@ class VerifyResponse(BaseModel):
     similarity_score: float
     threshold: float
     status: str
+    liveness1: Optional[LivenessDTO] = None
+    liveness2: Optional[LivenessDTO] = None
 
 
 class EnrollResponse(BaseModel):

@@ -16,12 +16,14 @@ class VerifyBase64Request(BaseModel):
     image1_base64: str = Field(..., description="Base64 string of first image")
     image2_base64: str = Field(..., description="Base64 string of second image")
     threshold: Optional[float] = Field(0.40, description="Cosine similarity threshold (default 0.40)")
+    check_liveness: Optional[bool] = Field(None, description="Enable anti-spoofing liveness check (overrides default config)")
 
 
 class EnrollRequest(BaseModel):
     """Enrollment request to register a person's face into gallery."""
     person_id: str = Field(..., description="Unique person identifier (e.g., 'duke', 'user_101')")
     images_base64: List[str] = Field(..., min_length=1, description="List of base64 encoded facial photos")
+    check_liveness: Optional[bool] = Field(None, description="Enable anti-spoofing check on enrollment photos")
 
 
 class IdentifyRequest(BaseModel):
@@ -29,3 +31,4 @@ class IdentifyRequest(BaseModel):
     image_base64: str = Field(..., description="Base64 encoded probe image")
     top_k: Optional[int] = Field(1, description="Number of top matches to return")
     threshold: Optional[float] = Field(0.40, description="Similarity threshold for identification")
+    check_liveness: Optional[bool] = Field(None, description="Enable anti-spoofing check on query probe photo")
