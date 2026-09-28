@@ -84,37 +84,53 @@ def run_demo():
         print(f"First 5 Vector Values: {[round(v, 4) for v in emb_data['embedding'][:5]]}...")
 
         # ----------------------------------------------------------------------
-        # 4. 1:1 Verification (Matching vs Mismatching pairs)
+        # 4. Anti-Spoofing & Liveness Check (MiniFASNetV2)
+        # ----------------------------------------------------------------------
+        print(f"\n[API Call 4] POST /api/v1/liveness (Anti-Spoofing on Kyle: {kyle_img_path.name})")
+        resp = client.post("/api/v1/liveness", json={"image_base64": kyle_b64})
+        print(f"Status Code: {resp.status_code}")
+        liveness_data = resp.json()
+        print(f"Face Count: {liveness_data['face_count']}")
+        if liveness_data["liveness"]:
+            liv = liveness_data["liveness"]
+            print(f"  Is Real: {liv['is_real']} ({liv['label']})")
+            print(f"  Confidence: {liv['confidence']:.4f}")
+            print(f"  Raw Probabilities [Print, Real, Replay]: {liv['raw_scores']}")
+
+        # ----------------------------------------------------------------------
+        # 5. 1:1 Verification (Matching vs Mismatching pairs with Liveness)
         # ----------------------------------------------------------------------
         duke1_path = DATA_DIR / "duke" / "duke1.jpg"
-        print("\n[API Call 4A] POST /api/v1/verify (Matching Pair: Duke vs Duke1)")
+        print("\n[API Call 5A] POST /api/v1/verify (Matching Pair: Duke vs Duke1)")
         resp = client.post(
             "/api/v1/verify",
             json={
                 "image1_base64": encode_file_to_base64(duke_img_path),
                 "image2_base64": encode_file_to_base64(duke1_path),
                 "threshold": 0.40,
+                "check_liveness": True,
             },
         )
         print(f"Status Code: {resp.status_code}")
         print(f"Result: {resp.json()}")
 
-        print("\n[API Call 4B] POST /api/v1/verify (Mismatching Pair: Duke vs Kyle)")
+        print("\n[API Call 5B] POST /api/v1/verify (Mismatching Pair: Duke vs Kyle)")
         resp = client.post(
             "/api/v1/verify",
             json={
                 "image1_base64": encode_file_to_base64(duke_img_path),
                 "image2_base64": encode_file_to_base64(kyle_img_path),
                 "threshold": 0.40,
+                "check_liveness": True,
             },
         )
         print(f"Status Code: {resp.status_code}")
         print(f"Result: {resp.json()}")
 
         # ----------------------------------------------------------------------
-        # 5. 1:N Enrollment & Identification
+        # 6. 1:N Enrollment & Identification
         # ----------------------------------------------------------------------
-        print("\n[API Call 5A] POST /api/v1/enroll (Enrolling Duke, Kyle, Leon into Gallery)")
+        print("\n[API Call 6A] POST /api/v1/enroll (Enrolling Duke, Kyle, Leon into Gallery)")
         for person in ["duke", "kyle", "leon"]:
             photos = list((DATA_DIR / person).glob("*.jpg"))[:2]  # Enroll with first 2 photos
             b64_photos = [encode_file_to_base64(p) for p in photos]
@@ -126,7 +142,7 @@ def run_demo():
 
         # Query with unseen probe image (leon3.jpg)
         probe_path = DATA_DIR / "leon" / "leon3.jpg"
-        print(f"\n[API Call 5B] POST /api/v1/identify (Probe Query with {probe_path.name})")
+        print(f"\n[API Call 6B] POST /api/v1/identify (Probe Query with {probe_path.name})")
         resp = client.post(
             "/api/v1/identify",
             json={"image_base64": encode_file_to_base64(probe_path), "top_k": 3, "threshold": 0.40},

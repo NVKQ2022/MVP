@@ -30,10 +30,11 @@ from src.utils.metrics import compute_pairwise_matrix, evaluate_dataset_verifica
 def print_banner():
     banner = """
 ========================================================================
-   Face Recognition Service (BlazeFace + ArcFace)
+   Face Recognition & Authentication Service
+   - Models: BlazeFace (Detection) + MiniFASNet (Anti-Spoofing) + ArcFace (Embeddings)
    - Architecture: Hierarchical Service & Factory Pattern
    - API Support: REST Endpoints (FastAPI) & Request Payloads
-   - Operations: Detect, Crop, 512-D Embedding, 1:1 Verify, 1:N Identify
+   - Operations: Detect, Crop, FAS/Liveness, 512-D Embedding, Verify, Identify
 ========================================================================
 """
     print(banner)
@@ -117,9 +118,9 @@ def main():
     )
     parser.add_argument(
         "--action",
-        choices=["all", "verify"],
+        choices=["all", "verify", "liveness"],
         default="all",
-        help="CLI action: 'all' (process dataset) or 'verify' (compare two images).",
+        help="CLI action: 'all' (process dataset), 'verify' (compare two images), or 'liveness' (check anti-spoofing).",
     )
     parser.add_argument(
         "--host",
@@ -142,7 +143,7 @@ def main():
     parser.add_argument(
         "--img1",
         type=Path,
-        help="First image for 1:1 verification.",
+        help="First image for verification or liveness check.",
     )
     parser.add_argument(
         "--img2",
@@ -176,6 +177,26 @@ def main():
             print(f"Image 2: {args.img2}")
             print(f"Similarity Score: {result.similarity_score:.4f} (Threshold: {result.threshold:.2f})")
             print(f"Decision: {result.status}")
+            if result.liveness1:
+                print(f"Image 1 Liveness: {result.liveness1.label} ({result.liveness1.confidence:.4f})")
+            if result.liveness2:
+                print(f"Image 2 Liveness: {result.liveness2.label} ({result.liveness2.confidence:.4f})")
+        elif args.action == "liveness":
+            if not args.img1:
+                print("Error: --img1 is required for liveness action.")
+                sys.exit(1)
+            result = service.check_liveness(args.img1)
+            print(f"Image: {args.img1}")
+            print(f"Face Count: {result.face_count}")
+            if result.liveness:
+                print(f"Status: {result.liveness.label}")
+                print(f"Is Real: {result.liveness.is_real}")
+                print(f"Confidence: {result.liveness.confidence:.4f}")
+                if result.liveness.attack_type:
+                    print(f"Detected Attack Type: {result.liveness.attack_type}")
+                print(f"Raw Probabilities [Print, Real, Replay]: {result.liveness.raw_scores}")
+            else:
+                print(f"Details: {result.details}")
         else:
             run_cli_pipeline(service, DATA_DIR, FACE_DIR)
     finally:

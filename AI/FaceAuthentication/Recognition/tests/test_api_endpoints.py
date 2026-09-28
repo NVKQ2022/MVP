@@ -81,15 +81,56 @@ def test_verification_match_and_mismatch(client):
     assert mismatch_resp.json()["match"] is False
 
 
+def test_liveness_file_endpoint(client):
+    img_path = DATA_DIR / "duke" / "duke.jpg"
+    with open(img_path, "rb") as f:
+        response = client.post("/api/v1/liveness/file", files={"file": ("duke.jpg", f, "image/jpeg")})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["face_count"] >= 1
+    assert data["liveness"]["is_real"] is True
+    assert data["liveness"]["label"] == "Real"
+    assert data["liveness"]["confidence"] > 0.60
+    assert len(data["liveness"]["raw_scores"]) == 3
+
+
+def test_liveness_json_endpoint(client):
+    img_path = DATA_DIR / "leon" / "leon.jpg"
+    b64 = encode_file_to_base64(img_path)
+    response = client.post("/api/v1/liveness", json={"image_base64": b64})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["face_count"] == 1
+    assert data["liveness"]["is_real"] is True
+    assert data["liveness"]["confidence"] > 0.60
+
+
+def test_verification_with_liveness(client):
+    duke = encode_file_to_base64(DATA_DIR / "duke" / "duke.jpg")
+    duke1 = encode_file_to_base64(DATA_DIR / "duke" / "duke1.jpg")
+
+    resp = client.post(
+        "/api/v1/verify",
+        json={"image1_base64": duke, "image2_base64": duke1, "threshold": 0.40, "check_liveness": True},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["match"] is True
+    assert data["liveness1"] is not None
+    assert data["liveness2"] is not None
+    assert data["liveness1"]["is_real"] is True
+    assert data["liveness2"]["is_real"] is True
+
+
 def test_enrollment_and_identification(client):
     for person in ["duke", "kyle", "leon"]:
         photos = [encode_file_to_base64(p) for p in list((DATA_DIR / person).glob("*.jpg"))[:2]]
-        res = client.post("/api/v1/enroll", json={"person_id": person, "images_base64": photos})
+        res = client.post("/api/v1/enroll", json={"person_id": person, "images_base64": photos, "check_liveness": True})
         assert res.status_code == 200
         assert res.json()["status"] == "ENROLLED"
 
     probe = encode_file_to_base64(DATA_DIR / "leon" / "leon3.jpg")
-    id_resp = client.post("/api/v1/identify", json={"image_base64": probe, "top_k": 3, "threshold": 0.40})
+    id_resp = client.post("/api/v1/identify", json={"image_base64": probe, "top_k": 3, "threshold": 0.40, "check_liveness": True})
     assert id_resp.status_code == 200
     data = id_resp.json()
     assert data["identified"] is True
