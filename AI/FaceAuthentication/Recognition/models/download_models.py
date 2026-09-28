@@ -19,6 +19,12 @@ BLAZEFACE_FILE = MODELS_DIR / "blaze_face_short_range.tflite"
 ARCFACE_URL = "https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_s.zip"
 ARCFACE_FILE = MODELS_DIR / "w600k_mbf.onnx"
 
+MINIFASNET_URL = (
+    "https://huggingface.co/garciafido/minifasnet-v2-anti-spoofing-onnx/"
+    "resolve/main/minifasnet_v2.onnx"
+)
+MINIFASNET_FILE = MODELS_DIR / "minifasnet_v2.onnx"
+
 
 class DownloadProgressBar(tqdm):
     def update_to(self, b=1, bsize=1, tsize=None):
@@ -57,6 +63,14 @@ def ensure_models():
         print(" ArcFace model downloaded and extracted.")
     else:
         print(f" ArcFace model exists: {ARCFACE_FILE}")
+
+    # 3. MiniFASNet Face Anti-Spoofing
+    if not MINIFASNET_FILE.exists():
+        print(f"Downloading MiniFASNet Anti-Spoofing model to {MINIFASNET_FILE}...")
+        download_url(MINIFASNET_URL, MINIFASNET_FILE)
+        print(" MiniFASNet model downloaded.")
+    else:
+        print(f" MiniFASNet model exists: {MINIFASNET_FILE}")
 
 
 if __name__ == "__main__":

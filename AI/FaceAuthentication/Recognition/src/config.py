@@ -24,12 +24,20 @@ EMBEDDING_BACKBONE = os.getenv("EMBEDDING_BACKBONE", "arcface").lower()
 # Available Preprocessing Backends: "landmark_affine", "bbox_crop"
 PREPROCESSING_TYPE = os.getenv("PREPROCESSING_TYPE", "landmark_affine").lower()
 
+# Available Anti-Spoofing Backends: "minifasnet"
+ANTISPOOFING_BACKBONE = os.getenv("ANTISPOOFING_BACKBONE", "minifasnet").lower()
+ENABLE_LIVENESS = os.getenv("ENABLE_LIVENESS", "true").lower() in ("true", "1", "yes")
+LIVENESS_THRESHOLD = float(os.getenv("LIVENESS_THRESHOLD", "0.60"))
+
 # Model Weights Paths
 BLAZEFACE_MODEL_PATH = Path(
     os.getenv("BLAZEFACE_MODEL_PATH", str(MODELS_DIR / "blaze_face_short_range.tflite"))
 )
 ARCFACE_MODEL_PATH = Path(
     os.getenv("ARCFACE_MODEL_PATH", str(MODELS_DIR / "w600k_mbf.onnx"))
+)
+MINIFASNET_MODEL_PATH = Path(
+    os.getenv("MINIFASNET_MODEL_PATH", str(MODELS_DIR / "minifasnet_v2.onnx"))
 )
 
 # Hyperparameters

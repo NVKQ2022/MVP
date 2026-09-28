@@ -10,6 +10,7 @@ Hierarchical Services Root Package:
 
 # Base Interfaces
 from src.services.base import (
+    BaseAntiSpoofingService,
     BaseFaceDetectionService,
     BaseFaceEmbeddingService,
     BaseFacePreprocessingService,
@@ -28,6 +29,12 @@ from src.services.preprocessing import (
     PreprocessingServiceFactory,
 )
 
+# Anti-Spoofing & Liveness
+from src.services.antispoofing import (
+    AntiSpoofingServiceFactory,
+    MiniFASNetAntiSpoofingService,
+)
+
 # Embedding
 from src.services.embedding import (
     ArcFaceEmbeddingService,
@@ -40,6 +47,7 @@ from src.services.orchestrator import FaceRecognitionService
 
 __all__ = [
     # Base
+    "BaseAntiSpoofingService",
     "BaseFaceDetectionService",
     "BaseFacePreprocessingService",
     "BaseFaceEmbeddingService",
@@ -50,6 +58,9 @@ __all__ = [
     "CanonicalLandmarkPreprocessingService",
     "BBoxCropPreprocessingService",
     "PreprocessingServiceFactory",
+    # Anti-Spoofing
+    "MiniFASNetAntiSpoofingService",
+    "AntiSpoofingServiceFactory",
     # Embedding
     "ArcFaceEmbeddingService",
     "EmbeddingServiceFactory",
