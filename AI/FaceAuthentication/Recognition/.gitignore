@@ -19,3 +19,12 @@ libs/
 
 # Demo temporary outputs
 Face/api_demo_output/
+
+# Dataset Images (only directory placeholders .gitkeep and download script are tracked)
+Data/**/*.jpg
+Data/**/*.jpeg
+Data/**/*.png
+Data/**/*.bmp
+!Data/**/.gitkeep
+!Data/**/README.md
+!Data/download_datasets.py
