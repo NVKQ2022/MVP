@@ -114,11 +114,21 @@ export function LoginForm() {
 
   const handleFaceCentered = useCallback(
     async (wholeImageBlob) => {
-      if (faceSubmitting) return;
+      if (faceSubmitting || faceError) return;
       await handleFaceLogin(wholeImageBlob);
     },
-    [faceSubmitting, handleFaceLogin]
+    [faceSubmitting, faceError, handleFaceLogin]
   );
+
+  const handleRetryOrCapture = useCallback(() => {
+    if (faceError) {
+      // Reset error state and unlock auto-capture for next attempt
+      setFaceError(null);
+      faceDetectionRef.current?.resetCooldown();
+      return;
+    }
+    handleFaceLogin();
+  }, [faceError, handleFaceLogin]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -214,7 +224,7 @@ export function LoginForm() {
           <DialogHeader>
             <DialogTitle>Face Login</DialogTitle>
             <DialogDescription>
-              Center your face in the camera frame to automatically sign in, or click Capture.
+              Hold your face inside the box for a moment to sign in, or click Capture.
             </DialogDescription>
           </DialogHeader>
 
@@ -225,7 +235,7 @@ export function LoginForm() {
               height={280}
               onFaceDetected={handleFaceDetected}
               onFaceCentered={handleFaceCentered}
-              autoCaptureOnCenter={true}
+              autoCaptureOnCenter={!faceError && !faceSubmitting}
             />
           )}
 
@@ -238,10 +248,15 @@ export function LoginForm() {
           <Button
             type="button"
             className="login-form__face-submit"
-            disabled={liveFaceCount === 0 || faceSubmitting}
-            onClick={() => handleFaceLogin()}
+            disabled={faceSubmitting || (!faceError && liveFaceCount === 0)}
+            onClick={handleRetryOrCapture}
+            variant={faceError ? 'secondary' : 'default'}
           >
-            {faceSubmitting ? 'Verifying...' : 'Capture & Sign in'}
+            {faceSubmitting
+              ? 'Verifying...'
+              : faceError
+                ? 'Try Again'
+                : 'Capture & Sign in'}
           </Button>
         </DialogContent>
       </Dialog>

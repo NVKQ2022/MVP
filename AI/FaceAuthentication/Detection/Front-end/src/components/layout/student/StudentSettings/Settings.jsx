@@ -75,6 +75,15 @@ export function StudentSettings() {
     }
   };
 
+  const handleRetryOrCapture = () => {
+    if (captureError) {
+      setCaptureError(null);
+      faceDetectionRef.current?.resetCooldown();
+      return;
+    }
+    handleCapture();
+  };
+
   const handleEnableMfa = async () => {
     await delayBeforeMfaAction();
     setIsMfaLoading(true);
@@ -164,7 +173,7 @@ export function StudentSettings() {
             ref={faceDetectionRef}
             height={320}
             onFaceCentered={handleCapture}
-            autoCaptureOnCenter={true}
+            autoCaptureOnCenter={!captureError && !isCapturing}
           />
 
           {captureError && <p className={styles.setup_error}>{captureError}</p>}
@@ -173,8 +182,12 @@ export function StudentSettings() {
             <Button variant="outline" onClick={() => setIsSetupOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => handleCapture()} disabled={isCapturing}>
-              {isCapturing ? 'Registering...' : 'Capture'}
+            <Button
+              onClick={handleRetryOrCapture}
+              disabled={isCapturing}
+              variant={captureError ? 'secondary' : 'default'}
+            >
+              {isCapturing ? 'Registering...' : captureError ? 'Try Again' : 'Capture'}
             </Button>
           </DialogFooter>
         </DialogContent>

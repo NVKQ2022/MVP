@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHand
 import { FilesetResolver, FaceDetector } from '@mediapipe/tasks-vision';
 import { Camera, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { appConfig } from '@/config/appConfig';
 import './FaceDetection.scss';
 
 /**
@@ -169,10 +170,10 @@ export const FaceDetection = forwardRef(function FaceDetection(
   {
     onFaceDetected,
     onFaceCentered,
-    autoCaptureOnCenter = false,
-    centerHoldDurationMs = 600,
-    cooldownMs = 2500,
-    minConfidence = 0.5,
+    autoCaptureOnCenter = true,
+    centerHoldDurationMs = appConfig.faceAuth?.centerHoldDurationMs ?? 800,
+    cooldownMs = appConfig.faceAuth?.cooldownMs ?? 2500,
+    minConfidence = appConfig.faceAuth?.minDetectionConfidence ?? 0.5,
     mirrored = true,
     showOverlay = true,
     showCenterGuide = true,
@@ -401,30 +402,37 @@ export const FaceDetection = forwardRef(function FaceDetection(
 
         let holdProgress = 0;
         const now = performance.now();
+        const isCaptureEnabled = autoCaptureOnCenter && Boolean(onFaceCenteredRef.current);
 
         if (centerStatus.isCentered) {
-          if (centeredSinceRef.current === null) {
-            centeredSinceRef.current = now;
-          }
-          const elapsed = now - centeredSinceRef.current;
-          holdProgress = Math.min(1.0, elapsed / centerHoldDurationMs);
+          if (isCaptureEnabled) {
+            if (centeredSinceRef.current === null) {
+              centeredSinceRef.current = now;
+            }
+            const elapsed = now - centeredSinceRef.current;
+            holdProgress = Math.min(1.0, elapsed / centerHoldDurationMs);
 
-          const shouldAutoCapture = autoCaptureOnCenter || Boolean(onFaceCenteredRef.current);
-          if (holdProgress >= 1.0 && !isLockedRef.current && shouldAutoCapture) {
-            isLockedRef.current = true;
-            lastCaptureTimeRef.current = now;
-            triggerFlash();
+            if (holdProgress >= 1.0 && !isLockedRef.current) {
+              isLockedRef.current = true;
+              lastCaptureTimeRef.current = now;
+              triggerFlash();
 
-            captureFullFrameBlob()
-              .then((fullFrameBlob) => {
-                if (onFaceCenteredRef.current) {
-                  onFaceCenteredRef.current(fullFrameBlob, centerStatus);
-                }
-              })
-              .catch((err) => {
-                console.error('Auto-capture full frame error:', err);
-                isLockedRef.current = false;
-              });
+              captureFullFrameBlob()
+                .then((fullFrameBlob) => {
+                  if (onFaceCenteredRef.current) {
+                    onFaceCenteredRef.current(fullFrameBlob, centerStatus);
+                  }
+                })
+                .catch((err) => {
+                  console.error('Auto-capture full frame error:', err);
+                  isLockedRef.current = false;
+                });
+            }
+          } else {
+            // When auto-capture is paused (e.g. after non-200 response, waiting for user to click Try Again)
+            centeredSinceRef.current = null;
+            holdProgress = 0;
+            setGuidanceMessage('Face inside box. Click "Try Again" to retry');
           }
         } else {
           centeredSinceRef.current = null;

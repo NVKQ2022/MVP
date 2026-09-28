@@ -10,102 +10,92 @@
 
 This document details all files modified to implement the requirements:
 1. **Send the whole image to the backend**: Updated the camera capture pipeline so that the entire uncropped video frame (`video.videoWidth` $\times$ `video.videoHeight`) is captured as a high-quality JPEG blob and transmitted to backend authentication and registration endpoints, replacing cropped face bounding boxes.
-2. **Auto-send request whenever face is centered**: Implemented real-time face centering detection, visual biometric targeting guide with corner brackets, stability countdown ($600\text{ ms}$ hold timer), camera shutter flash effect, and automated request dispatch without requiring manual button clicks.
+2. **Auto-send request whenever face is centered in the box**: Implemented real-time face centering detection, visual biometric targeting guide with corner brackets, stability countdown ($800\text{ ms}$ hold timer), camera shutter flash effect, and automated request dispatch without requiring manual button clicks.
+3. **Non-200 Response Retry Handling**: When the backend returns a non-200 response (e.g. 400 Bad Request, 401 Unauthorized, 500 Internal Error, or network failure), auto-capture is paused to avoid spamming the backend, and the submit button changes dynamically into **"Try Again"**. Clicking "Try Again" clears the error and seamlessly resumes face detection and auto-capture.
+4. **Configurable Wait Time**: Centralized face detection configuration in `src/config/appConfig.js` (`centerHoldDurationMs`).
 
 ---
 
-## 📂 List of Modified & Added Files
+## ⚙️ How to Configure the Wait Time to Send Requests
 
-| # | File Path | Type | Component / Purpose |
-| :-: | :--- | :---: | :--- |
-| **1** | [`src/features/auth/components/FaceRecognition/FaceDetection.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/features/auth/components/FaceRecognition/FaceDetection.jsx) | **Modified** | Core camera stream, MediaPipe BlazeFace loop, centering evaluation, reticle overlay, full-frame capture, and auto-capture event emitter |
-| **2** | [`src/features/auth/components/FaceRecognition/FaceDetection.scss`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/features/auth/components/FaceRecognition/FaceDetection.scss) | **Modified** | Styles for biometric guidance banner, centering glow, aligning pulse animation, and shutter flash effect |
-| **3** | [`src/features/auth/components/LoginForm/LoginForm.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/features/auth/components/LoginForm/LoginForm.jsx) | **Modified** | Face Login modal integration: receives whole image blob, auto-submits to `/api/v1/Auth/face-login`, handles cooldown & retry |
-| **4** | [`src/components/layout/admin/AdminSettings/Settings.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/components/layout/admin/AdminSettings/Settings.jsx) | **Modified** | Admin face registration: sends whole frame to `/api/v1/Auth/face-register`, auto-captures on centered |
-| **5** | [`src/components/layout/student/StudentSettings/Settings.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/components/layout/student/StudentSettings/Settings.jsx) | **Modified** | Student face registration: sends whole frame to `/api/v1/Auth/face-register`, auto-captures on centered |
-| **6** | [`NOTE.md`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/NOTE.md) | **Created** | Comprehensive technical documentation and change log (this file) |
+To adjust the wait time (the amount of time the user's face must remain inside the box before the request is automatically triggered), open:
 
----
+📁 **[`src/config/appConfig.js`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/config/appConfig.js)**
 
-## 🛠️ Detailed Changes by File
-
-### 1. `FaceDetection.jsx`
-- **Location**: `src/features/auth/components/FaceRecognition/FaceDetection.jsx`
-- **Rationale**:
-  - Previously, `captureCroppedFace()` cropped the bounding box directly from the camera feed. This severed the surrounding scene context required by MiniFASNet anti-spoofing ($2.7\times$ patch expansion).
-  - Added `evaluateFaceCentering()` to compute real-time face centroid offsets relative to the video frame dimensions.
-  - Implemented `drawCenterGuideOverlay()` on the canvas to render a biometric viewfinder box with corner brackets, glowing emerald green state, and countdown progress bar.
-  - Added `captureFullFrameBlob()` returning the entire uncropped image blob (`video.videoWidth` $\times$ `video.videoHeight`).
-  - Redirected `captureCroppedFace` in `useImperativeHandle` to `captureFullFrameBlob()` so any legacy callers automatically receive the whole image.
-  - Added props:
-    - `onFaceCentered?: (blob, centerStatus) => void`
-    - `autoCaptureOnCenter?: boolean` (defaults to `true` when `onFaceCentered` is provided)
-    - `centerHoldDurationMs?: number` (default `600`)
-    - `cooldownMs?: number` (default `2500`)
-    - `showCenterGuide?: boolean` (default `true`)
-
-#### Centering Algorithm Details
 ```javascript
-// Normalized distance from camera frame center
-const dx = Math.abs(faceCenterX - frameWidth / 2) / frameWidth;
-const dy = Math.abs(faceCenterY - frameHeight / 2) / frameHeight;
-const boxRatio = boxWidth / frameWidth;
+export const appConfig = {
+  appName: 'EduPortal',
+  // ... other configs ...
 
-const isHorizontallyCentered = dx <= 0.13; // Within +/- 13% of center X
-const isVerticallyCentered = dy <= 0.15;   // Within +/- 15% of center Y
-const isGoodSize = boxRatio >= 0.15 && boxRatio <= 0.65; // User distance bounds
-const isSingleFace = detections.length === 1;
+  faceAuth: {
+    /**
+     * Wait time (in milliseconds) the face must stay inside the box before sending the request.
+     * Default: 800ms (0.8 seconds).
+     * 
+     * Examples:
+     * - 500  -> Fast response (0.5s)
+     * - 800  -> Balanced (0.8s) - recommended
+     * - 1200 -> Deliberate hold (1.2s)
+     */
+    centerHoldDurationMs: 800,
 
-const isCentered = isHorizontallyCentered && isVerticallyCentered && isGoodSize && isSingleFace;
+    /**
+     * Cooldown time (in milliseconds) after an attempt before re-enabling auto-trigger.
+     */
+    cooldownMs: 2500,
+
+    /**
+     * Minimum confidence score required for face detection (0.0 to 1.0).
+     */
+    minDetectionConfidence: 0.5,
+  },
+};
 ```
 
 ---
 
-### 2. `FaceDetection.scss`
-- **Location**: `src/features/auth/components/FaceRecognition/FaceDetection.scss`
-- **Key Additions**:
-  - `.face-detection__guide-banner`: Floating glassmorphism badge at the top displaying real-time feedback (`"Position your face in the camera"`, `"Align your face in the center"`, `"Face centered! Hold still..."`).
-  - `.face-detection__guide-banner--centered`: Glowing green border and background accent when centered.
-  - `.face-detection__flash`: Shutter flash animation (`300ms` fade-out) giving visual capture feedback.
-  - `.face-detection__status-dot--aligning`: Cyan pulsing dot during alignment adjustments.
+## 📂 List of Modified Files
+
+| # | File Path | Type | Purpose |
+| :-: | :--- | :---: | :--- |
+| **1** | [`src/config/appConfig.js`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/config/appConfig.js) | **Modified** | Centralized configuration for `faceAuth.centerHoldDurationMs`, `cooldownMs`, and `minDetectionConfidence`. |
+| **2** | [`src/features/auth/components/FaceRecognition/FaceDetection.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/features/auth/components/FaceRecognition/FaceDetection.jsx) | **Modified** | Full-frame uncropped capture, centering evaluation, reticle overlay, auto-trigger with configurable hold duration, and paused state handling. |
+| **3** | [`src/features/auth/components/FaceRecognition/FaceDetection.scss`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/features/auth/components/FaceRecognition/FaceDetection.scss) | **Modified** | Styles for biometric guidance banner, centering glow, aligning pulse animation, and shutter flash effect. |
+| **4** | [`src/features/auth/components/LoginForm/LoginForm.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/features/auth/components/LoginForm/LoginForm.jsx) | **Modified** | Face Login modal: sends whole image blob, switches button to **"Try Again"** upon non-200 responses, pauses auto-capture on error, and resumes on retry click. |
+| **5** | [`src/components/layout/admin/AdminSettings/Settings.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/components/layout/admin/AdminSettings/Settings.jsx) | **Modified** | Admin face registration: sends whole frame, switches button to **"Try Again"** upon non-200 responses. |
+| **6** | [`src/components/layout/student/StudentSettings/Settings.jsx`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/src/components/layout/student/StudentSettings/Settings.jsx) | **Modified** | Student face registration: sends whole frame, switches button to **"Try Again"** upon non-200 responses. |
+| **7** | [`NOTE.md`](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Detection/Front-end/NOTE.md) | **Updated** | Comprehensive technical documentation and change log (this file). |
 
 ---
 
-### 3. `LoginForm.jsx`
-- **Location**: `src/features/auth/components/LoginForm/LoginForm.jsx`
-- **Changes**:
-  - `handleFaceLogin(capturedBlob = null)`:
-    - If `capturedBlob` is passed via `onFaceCentered`, it is used directly; otherwise falls back to `captureFullFrame()`.
-    - Packages the **whole image** into `FormData.append('Capture', faceBlob, 'face_capture.jpg')`.
-    - Sends request to backend `/api/v1/Auth/face-login`.
-    - Handles error states and triggers `faceDetectionRef.current?.resetCooldown()`.
-  - Added `handleFaceCentered`:
-    - Automatically calls `handleFaceLogin(wholeImageBlob)` as soon as the face is centered and held steady for 600ms.
-  - Updated `<FaceDetection>` props:
-    ```jsx
-    <FaceDetection
-      ref={faceDetectionRef}
-      className="login-form__face-detection"
-      height={280}
-      onFaceDetected={handleFaceDetected}
-      onFaceCentered={handleFaceCentered}
-      autoCaptureOnCenter={true}
-    />
-    ```
+## 🔄 State Transition: "Try Again" Button & Retry Flow
 
----
-
-### 4. `AdminSettings/Settings.jsx` & 5. `StudentSettings/Settings.jsx`
-- **Location**:
-  - `src/components/layout/admin/AdminSettings/Settings.jsx`
-  - `src/components/layout/student/StudentSettings/Settings.jsx`
-- **Changes**:
-  - `handleCapture(capturedBlob = null)`:
-    - Ingests whole uncropped image: `capturedBlob || (await faceDetectionRef.current?.captureFullFrame())`.
-    - Appends full image to `FormData.append('faceImage', blob, 'face.jpg')`.
-    - Calls `authApi.faceRegister(formData)`.
-  - Added `onFaceCentered={handleCapture}` and `autoCaptureOnCenter={true}` to `<FaceDetection>`.
-  - Updated dialog prompt text: `"Position your face in the center of the camera frame to automatically capture, or press Capture."`
+```mermaid
+stateDiagram-v2
+    [*] --> Idle: Open Face Login Modal
+    Idle --> FaceInBox: User positions face in target box
+    FaceInBox --> CountingDown: Center validated (dx <= 13%, dy <= 15%)
+    CountingDown --> FaceInBox: Face leaves box (reset timer)
+    CountingDown --> TriggerCapture: Held for centerHoldDurationMs (e.g. 800ms)
+    TriggerCapture --> Submitting: Capture full frame & send POST /api/v1/Auth/face-login
+    
+    state Submitting {
+        ButtonState: "Verifying..." (disabled)
+    }
+    
+    Submitting --> Success200: HTTP 200 OK
+    Success200 --> Authenticated: Session established, navigate to app
+    
+    Submitting --> ErrorNon200: Non-200 Response (400, 401, 500, etc.)
+    
+    state ErrorNon200 {
+        ErrorAlert: Display error message
+        ButtonRetry: Button changes to "Try Again" (variant: secondary)
+        AutoCapturePaused: Auto-capture paused to avoid spamming
+    }
+    
+    ErrorNon200 --> Idle: User clicks "Try Again" (resets error & cooldown)
+```
 
 ---
 
@@ -138,7 +128,7 @@ flowchart TD
 
 1. **Frontend Production Build**:
    ```bash
-   cd AI/FaceAuthentication/Detection/Front-end && npm run build
+   npm --prefix AI/FaceAuthentication/Detection/Front-end run build
    ```
    **Output**:
    ```text
@@ -146,8 +136,8 @@ flowchart TD
    ✓ 2372 modules transformed.
    dist/index.html                   0.45 kB
    dist/assets/index-B5RgCKKq.css   57.43 kB
-   dist/assets/index-D1VTlFOQ.js   941.61 kB
-   ✓ built in 1.13s
+   dist/assets/index-BGUqXUe0.js   942.19 kB
+   ✓ built in 1.15s
    ```
    Zero build errors or syntax warnings.
 
@@ -158,5 +148,5 @@ flowchart TD
    **Output**:
    ```text
    tests/test_api_endpoints.py .............. [100%]
-   14 passed in 2.75s
+   14 passed in 1.98s
    ```
