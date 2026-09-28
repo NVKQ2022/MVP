@@ -135,6 +135,11 @@ Recognition/
 │   └── test_api_endpoints.py         # End-to-end API integration tests
 ├── models/                           # Model weights & downloader
 │   └── download_models.py            # Automated downloader for BlazeFace, ArcFace, MiniFASNet
+├── Data/                             # Modular Dataset Splits (Placeholders tracked)
+│   ├── Detection/                    # Single-face & multi-face detection samples
+│   ├── Recognition/                  # Subject identity galleries (duke, kyle, leon)
+│   ├── Anti_Spoofing/                # Live captures & presentation spoof attacks
+│   └── download_datasets.py          # Automated downloader for sample dataset (~800 KB)
 ├── docs/                             # Comprehensive Documentation
 │   ├── API_REFERENCE.md              # Complete REST API documentation
 │   ├── ARCHITECTURE.md               # Architectural patterns & layer contracts
@@ -225,17 +230,22 @@ Now setting `export EMBEDDING_BACKBONE="adaface"` automatically activates AdaFac
 ```
 Swagger UI docs: **`http://localhost:8000/docs`**
 
-### 4. CLI Liveness / Anti-Spoofing Check
+### 4. Fetch Sample Datasets (~800 KB)
 ```bash
-./venv/bin/python main.py --action liveness --img1 Data/duke/duke.jpg
+./venv/bin/python Data/download_datasets.py
 ```
 
-### 5. CLI 1:1 Verification with Liveness
+### 5. CLI Liveness / Anti-Spoofing Check
 ```bash
-./venv/bin/python main.py --action verify --img1 Data/duke/duke.jpg --img2 Data/duke/duke1.jpg
+./venv/bin/python main.py --action liveness --img1 Data/Anti_Spoofing/real/real_1.jpg
 ```
 
-### 6. CLI Full Dataset Evaluation Matrix
+### 6. CLI 1:1 Verification with Liveness
+```bash
+./venv/bin/python main.py --action verify --img1 Data/Recognition/duke/duke.jpg --img2 Data/Recognition/duke/duke1.jpg
+```
+
+### 7. CLI Full Dataset Evaluation Matrix
 ```bash
 ./venv/bin/python main.py --action all
 ```
