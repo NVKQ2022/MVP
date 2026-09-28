@@ -1,5 +1,5 @@
 """
-FastAPI REST API Routes for Face Detection, Cropping, Embedding, Verification, and Enrollment.
+FastAPI REST API Routes for Face Detection, Cropping, Embedding, Liveness/FAS, Verification, and Enrollment.
 """
 
 from typing import List, Optional
@@ -17,6 +17,7 @@ from src.schemas.response_schemas import (
     EmbeddingResponse,
     EnrollResponse,
     IdentifyResponse,
+    LivenessResponse,
     VerifyResponse,
 )
 from src.services.orchestrator import FaceRecognitionService
@@ -121,19 +122,48 @@ async def extract_embedding_file(
 
 
 # ==========================================
-# 4. 1:1 Verification Endpoints
+# 4. Anti-Spoofing & Liveness Endpoints
+# ==========================================
+@router.post("/liveness", response_model=LivenessResponse, summary="Check Face Liveness / Anti-Spoofing (Base64 JSON)")
+def check_liveness_json(
+    payload: Base64ImagePayload,
+    service: FaceRecognitionService = Depends(get_recognition_service),
+):
+    """Evaluates face anti-spoofing (liveness) to detect 2D print and screen replay attacks."""
+    try:
+        return service.check_liveness(payload.image_base64)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/liveness/file", response_model=LivenessResponse, summary="Check Face Liveness (Multipart File)")
+async def check_liveness_file(
+    file: UploadFile = File(...),
+    service: FaceRecognitionService = Depends(get_recognition_service),
+):
+    """Evaluates face anti-spoofing (liveness) from an uploaded image file."""
+    try:
+        image_bytes = await file.read()
+        return service.check_liveness(image_bytes)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+# ==========================================
+# 5. 1:1 Verification Endpoints
 # ==========================================
 @router.post("/verify", response_model=VerifyResponse, summary="1:1 Verification (Base64 JSON)")
 def verify_json(
     request: VerifyBase64Request,
     service: FaceRecognitionService = Depends(get_recognition_service),
 ):
-    """1:1 Face Verification comparing two base64 encoded images."""
+    """1:1 Face Verification comparing two base64 encoded images with optional liveness check."""
     try:
         return service.verify(
             image1_input=request.image1_base64,
             image2_input=request.image2_base64,
             threshold=request.threshold,
+            check_liveness=request.check_liveness,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -144,9 +174,10 @@ async def verify_files(
     file1: UploadFile = File(...),
     file2: UploadFile = File(...),
     threshold: Optional[float] = Form(0.40),
+    check_liveness: Optional[bool] = Form(None),
     service: FaceRecognitionService = Depends(get_recognition_service),
 ):
-    """1:1 Face Verification comparing two uploaded image files."""
+    """1:1 Face Verification comparing two uploaded image files with optional liveness check."""
     try:
         bytes1 = await file1.read()
         bytes2 = await file2.read()
@@ -154,13 +185,14 @@ async def verify_files(
             image1_input=bytes1,
             image2_input=bytes2,
             threshold=threshold,
+            check_liveness=check_liveness,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # ==========================================
-# 5. 1:N Enrollment & Identification Endpoints
+# 6. 1:N Enrollment & Identification Endpoints
 # ==========================================
 @router.post("/enroll", response_model=EnrollResponse, summary="Enroll identity with photos")
 def enroll_person(
@@ -172,6 +204,7 @@ def enroll_person(
         return service.enroll(
             person_id=request.person_id,
             images_input=request.images_base64,
+            check_liveness=request.check_liveness,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -188,6 +221,7 @@ def identify_person(
             query_image_input=request.image_base64,
             top_k=request.top_k or 1,
             threshold=request.threshold,
+            check_liveness=request.check_liveness,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
