@@ -18,6 +18,7 @@ from src.schemas.response_schemas import (
     EnrollResponse,
     IdentifyResponse,
     LivenessResponse,
+    PureEmbeddingResponse,
     VerifyResponse,
 )
 from src.services.orchestrator import FaceRecognitionService
@@ -117,6 +118,60 @@ async def extract_embedding_file(
     try:
         image_bytes = await file.read()
         return service.get_embedding(image_bytes)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+# ==========================================
+# 3.5. Secure Liveness-Verified Embedding Endpoints
+# ==========================================
+@router.post(
+    "/embedding/live",
+    response_model=PureEmbeddingResponse,
+    summary="Extract embedding with liveness check (Base64 JSON)",
+)
+@router.post(
+    "/live-embedding",
+    response_model=PureEmbeddingResponse,
+    include_in_schema=False,
+)
+def extract_live_embedding_json(
+    payload: Base64ImagePayload,
+    service: FaceRecognitionService = Depends(get_recognition_service),
+):
+    """
+    Receives a whole image (Base64), verifies face liveness to block spoof attacks,
+    runs face detection & canonical alignment, and returns only the 512-D embedding.
+    """
+    try:
+        embedding = service.get_live_face_embedding(payload.image_base64)
+        return PureEmbeddingResponse(embedding=embedding)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post(
+    "/embedding/live/file",
+    response_model=PureEmbeddingResponse,
+    summary="Extract embedding with liveness check (Multipart File)",
+)
+@router.post(
+    "/live-embedding/file",
+    response_model=PureEmbeddingResponse,
+    include_in_schema=False,
+)
+async def extract_live_embedding_file(
+    file: UploadFile = File(...),
+    service: FaceRecognitionService = Depends(get_recognition_service),
+):
+    """
+    Receives a whole image file, verifies face liveness to block spoof attacks,
+    runs face detection & canonical alignment, and returns only the 512-D embedding.
+    """
+    try:
+        image_bytes = await file.read()
+        embedding = service.get_live_face_embedding(image_bytes)
+        return PureEmbeddingResponse(embedding=embedding)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

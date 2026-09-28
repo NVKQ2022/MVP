@@ -25,6 +25,7 @@ from src.schemas.response_schemas import (
     IdentifyResponse,
     LivenessDTO,
     LivenessResponse,
+    PureEmbeddingResponse,
     VerifyResponse,
 )
 from src.services.antispoofing.factory import AntiSpoofingServiceFactory
@@ -151,6 +152,50 @@ class FaceRecognitionService:
             embedding_dim=len(embedding),
             embedding=embedding.tolist(),
         )
+
+    def get_live_face_embedding(
+        self,
+        image_input: Union[bytes, str, np.ndarray],
+    ) -> List[float]:
+        """
+        Receives a whole image, verifies face liveness to block spoof attacks,
+        detects and aligns the face, and returns only the 512-D embedding vector.
+
+        Pipeline:
+        1. Decode whole image payload.
+        2. Detect face in the whole image (BlazeFace).
+        3. Check liveness / anti-spoofing with 2.7x context patch (MiniFASNet).
+           Rejects with ValueError if spoof attack (print/replay) is detected.
+        4. Geometry-align face into 112x112 canonical coordinates.
+        5. Extract and L2-normalize 512-D deep feature vector.
+
+        Returns:
+            List[float]: The 512-D normalized face embedding vector.
+
+        Raises:
+            ValueError: If no face is detected or if liveness check fails.
+        """
+        img_bgr = ImageCodecService.decode(image_input)
+        best_face = self.detector.detect_best(img_bgr)
+
+        if not best_face:
+            raise ValueError("No face detected in the provided image.")
+
+        # Anti-spoofing liveness check on whole image + face bbox
+        liveness = self.antispoof.check_liveness(img_bgr, best_face.bbox)
+        if not liveness.is_real:
+            attack_info = f" ({liveness.attack_type})" if liveness.attack_type else ""
+            raise ValueError(
+                f"Liveness check failed: Spoof attack detected{attack_info}. "
+                f"Real face confidence: {liveness.confidence:.4f} < {self.liveness_threshold:.2f} threshold."
+            )
+
+        # Alignment and ArcFace embedding extraction
+        aligned_bgr = self.preprocessor.align_and_crop(img_bgr, best_face)
+        tensor = self.preprocessor.normalize_tensor(aligned_bgr)
+        embedding = self.embedder.extract(tensor, normalize=True)
+
+        return embedding.tolist()
 
     def verify(
         self,

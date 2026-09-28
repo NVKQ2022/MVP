@@ -51,6 +51,11 @@ class EmbeddingResponse(BaseModel):
     embedding: List[float]
 
 
+class PureEmbeddingResponse(BaseModel):
+    """Response containing only the face feature embedding vector."""
+    embedding: List[float] = Field(..., description="512-dimensional ArcFace normalized feature vector")
+
+
 class LivenessDTO(BaseModel):
     """Face Anti-Spoofing and Liveness estimation result."""
     is_real: bool = Field(..., description="True if real live human face, False if spoof attack")

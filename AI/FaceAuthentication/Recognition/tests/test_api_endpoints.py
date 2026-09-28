@@ -157,3 +157,40 @@ def test_enrollment_and_identification(client):
     data = id_resp.json()
     assert data["identified"] is True
     assert data["top_match"]["person_id"] == "leon"
+
+
+def test_live_embedding_file_success(client):
+    img_path = ANTISPOOFING_DATA_DIR / "real" / "real_1.jpg"
+    with open(img_path, "rb") as f:
+        resp = client.post("/api/v1/embedding/live/file", files={"file": ("real_1.jpg", f, "image/jpeg")})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert list(data.keys()) == ["embedding"]
+    assert len(data["embedding"]) == 512
+
+
+def test_live_embedding_json_success(client):
+    duke = encode_file_to_base64(RECOGNITION_DATA_DIR / "duke" / "duke.jpg")
+    resp = client.post("/api/v1/embedding/live", json={"image_base64": duke})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert list(data.keys()) == ["embedding"]
+    assert len(data["embedding"]) == 512
+
+
+def test_live_embedding_spoof_rejection(client):
+    spoof_path = ANTISPOOFING_DATA_DIR / "spoof" / "spoof_replay_1.jpg"
+    with open(spoof_path, "rb") as f:
+        resp = client.post("/api/v1/embedding/live/file", files={"file": ("spoof.jpg", f, "image/jpeg")})
+    assert resp.status_code == 400
+    data = resp.json()
+    assert "Spoof attack detected" in data["detail"]
+    assert "Liveness check failed" in data["detail"]
+
+
+def test_live_embedding_alias_route(client):
+    img_path = ANTISPOOFING_DATA_DIR / "real" / "real_1.jpg"
+    with open(img_path, "rb") as f:
+        resp = client.post("/api/v1/live-embedding/file", files={"file": ("real_1.jpg", f, "image/jpeg")})
+    assert resp.status_code == 200
+    assert len(resp.json()["embedding"]) == 512
