@@ -15,8 +15,8 @@ Welcome to the documentation suite for the Face Detection & ArcFace Recognition 
 3. **[System Architecture & Design](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Recognition/docs/ARCHITECTURE.md)**
    - Layered architecture, Service Class Pattern, Base interfaces, Factory Pattern, Dependency Inversion.
 
-4. **[Pipeline Explained Step-by-Step](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Recognition/docs/PIPELINE_EXPLAINED.md)**
-   - Technical walkthrough of the 4 stages: BlazeFace Detection $\rightarrow$ 4-Point Affine Alignment $\rightarrow$ Preprocessing $\rightarrow$ ArcFace Embedding & Cosine Similarity.
+4. **[Pipeline Explained Step-by-Step](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Recognition/docs/PIPELINE.md)**
+   - Technical walkthrough of the 5 stages: BlazeFace Detection $\rightarrow$ MiniFASNet Anti-Spoofing $\rightarrow$ 4-Point Affine Alignment $\rightarrow$ ArcFace Embedding $\rightarrow$ Cosine Similarity Matching.
 
 5. **[REST API Reference](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Recognition/docs/API_REFERENCE.md)**
    - Complete endpoint specifications, Base64 JSON and Multipart request payloads, response schemas, and cURL examples.
