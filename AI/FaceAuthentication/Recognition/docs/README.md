@@ -26,3 +26,7 @@ Welcome to the documentation suite for the Face Detection & ArcFace Recognition 
 
 7. **[Accuracy Analysis & Improvement Roadmap](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Recognition/docs/IMPROVEMENTS.md)**
    - Root-cause analysis of accuracy variance and difficulty-ordered solutions for production upgrades.
+
+8. **[Presentation & Teacher Defense Guide](file:///home/quan/projects/maivenpoint/AI/FaceAuthentication/Recognition/docs/PRESENTATION_GUIDELINE.md)**
+   - 30-second elevator pitch, live demo walkthrough script, anticipated teacher Q&A defense questions with model answers, and key metrics cheat sheet.
+
