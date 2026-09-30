@@ -1,8 +1,8 @@
-"""Custom Exception Hierarchy for rag_core."""
+"""Custom Exception Hierarchy for polyrag."""
 
 
 class RAGException(Exception):
-    """Base exception for all errors raised in rag_core."""
+    """Base exception for all errors raised in polyrag."""
     pass
 
 

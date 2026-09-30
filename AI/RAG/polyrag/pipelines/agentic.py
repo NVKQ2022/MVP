@@ -3,13 +3,13 @@
 import time
 from typing import Any
 
-from rag_core.core.interfaces import (
+from polyrag.core.interfaces import (
     BaseEmbeddingModel,
     BaseLLMClient,
     BaseVectorStore,
 )
-from rag_core.core.models import RAGResponse
-from rag_core.exceptions import RetrievalError
+from polyrag.core.models import RAGResponse
+from polyrag.exceptions import RetrievalError
 
 
 class AgenticRAG:

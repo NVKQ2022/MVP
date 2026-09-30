@@ -1,12 +1,12 @@
 """Core package exposing interfaces and models."""
 
-from rag_core.core.interfaces import (
+from polyrag.core.interfaces import (
     BaseChunker,
     BaseEmbeddingModel,
     BaseLLMClient,
     BaseVectorStore,
 )
-from rag_core.core.models import (
+from polyrag.core.models import (
     AgentAction,
     AgentResponse,
     AgentStep,

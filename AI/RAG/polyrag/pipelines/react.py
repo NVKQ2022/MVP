@@ -5,12 +5,12 @@ import re
 import time
 from typing import Any
 
-from rag_core.core.interfaces import (
+from polyrag.core.interfaces import (
     BaseEmbeddingModel,
     BaseLLMClient,
     BaseVectorStore,
 )
-from rag_core.core.models import AgentAction, AgentResponse, AgentStep
+from polyrag.core.models import AgentAction, AgentResponse, AgentStep
 
 
 class ReActAgent:

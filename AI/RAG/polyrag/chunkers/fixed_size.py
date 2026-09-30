@@ -1,6 +1,6 @@
 """Fixed size overlapping character chunker."""
 
-from rag_core.core.interfaces import BaseChunker
+from polyrag.core.interfaces import BaseChunker
 
 
 class FixedSizeChunker(BaseChunker):

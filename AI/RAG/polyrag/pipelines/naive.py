@@ -4,13 +4,13 @@ from pathlib import Path
 import time
 from typing import Any
 
-from rag_core.core.interfaces import (
+from polyrag.core.interfaces import (
     BaseChunker,
     BaseEmbeddingModel,
     BaseLLMClient,
     BaseVectorStore,
 )
-from rag_core.core.models import RAGResponse
+from polyrag.core.models import RAGResponse
 
 
 class NaiveRAG:
@@ -38,7 +38,7 @@ class NaiveRAG:
         if not text.strip():
             return []
         if self.chunker is None:
-            from rag_core.chunkers.fixed_size import FixedSizeChunker
+            from polyrag.chunkers.fixed_size import FixedSizeChunker
             self.chunker = FixedSizeChunker()
 
         chunks = self.chunker.chunk(text)

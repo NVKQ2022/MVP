@@ -1,4 +1,4 @@
-"""Abstract Base Classes and Interfaces (Ports) for rag_core."""
+"""Abstract Base Classes and Interfaces (Ports) for polyrag."""
 
 from abc import ABC, abstractmethod
 from typing import Any

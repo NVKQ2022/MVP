@@ -1,4 +1,4 @@
-"""Data Models and Entities for rag_core."""
+"""Data Models and Entities for polyrag."""
 
 from dataclasses import dataclass, field
 from typing import Any

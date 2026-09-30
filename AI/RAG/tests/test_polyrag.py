@@ -1,14 +1,14 @@
-"""Unit tests for the modular rag_core package."""
+"""Unit tests for the modular polyrag package."""
 
 from pathlib import Path
 import tempfile
 from typing import Any
 import pytest
 
-from rag_core.chunkers.fixed_size import FixedSizeChunker
-from rag_core.chunkers.recursive import RecursiveCharacterChunker
-from rag_core.core.interfaces import BaseEmbeddingModel, BaseLLMClient
-from rag_core.core.models import (
+from polyrag.chunkers.fixed_size import FixedSizeChunker
+from polyrag.chunkers.recursive import RecursiveCharacterChunker
+from polyrag.core.interfaces import BaseEmbeddingModel, BaseLLMClient
+from polyrag.core.models import (
     AgentAction,
     AgentResponse,
     AgentStep,
@@ -17,11 +17,11 @@ from rag_core.core.models import (
     RAGResponse,
     SearchResult,
 )
-from rag_core.pipelines.agentic import AgenticRAG
-from rag_core.pipelines.naive import NaiveRAG
-from rag_core.pipelines.react import ReActAgent
-from rag_core.service import AgenticRAGService, RAGService
-from rag_core.vector_stores.memory import InMemoryVectorStore
+from polyrag.pipelines.agentic import AgenticRAG
+from polyrag.pipelines.naive import NaiveRAG
+from polyrag.pipelines.react import ReActAgent
+from polyrag.service import AgenticRAGService, RAGService
+from polyrag.vector_stores.memory import InMemoryVectorStore
 
 
 class MockEmbeddingModel(BaseEmbeddingModel):

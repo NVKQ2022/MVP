@@ -1,6 +1,6 @@
 """Local Sentence-Transformers embedding implementation."""
 
-from rag_core.core.interfaces import BaseEmbeddingModel
+from polyrag.core.interfaces import BaseEmbeddingModel
 
 
 class SentenceTransformerEmbedding(BaseEmbeddingModel):

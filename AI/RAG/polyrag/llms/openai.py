@@ -4,8 +4,8 @@ import json
 import re
 from typing import Any
 
-from rag_core.core.interfaces import BaseLLMClient
-from rag_core.exceptions import LLMGenerationError
+from polyrag.core.interfaces import BaseLLMClient
+from polyrag.exceptions import LLMGenerationError
 
 
 class OpenAILLM(BaseLLMClient):

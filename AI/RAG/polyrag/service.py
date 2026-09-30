@@ -4,20 +4,20 @@ import os
 from pathlib import Path
 from typing import Any
 
-from rag_core.chunkers.recursive import RecursiveCharacterChunker
-from rag_core.core.interfaces import (
+from polyrag.chunkers.recursive import RecursiveCharacterChunker
+from polyrag.core.interfaces import (
     BaseChunker,
     BaseEmbeddingModel,
     BaseLLMClient,
     BaseVectorStore,
 )
-from rag_core.core.models import RAGResponse
-from rag_core.embeddings.sentence_transformers import SentenceTransformerEmbedding
-from rag_core.llms.openai import OpenAILLM
-from rag_core.pipelines.agentic import AgenticRAG
-from rag_core.pipelines.naive import NaiveRAG
-from rag_core.vector_stores.chroma import ChromaVectorStore
-from rag_core.vector_stores.memory import InMemoryVectorStore
+from polyrag.core.models import RAGResponse
+from polyrag.embeddings.sentence_transformers import SentenceTransformerEmbedding
+from polyrag.llms.openai import OpenAILLM
+from polyrag.pipelines.agentic import AgenticRAG
+from polyrag.pipelines.naive import NaiveRAG
+from polyrag.vector_stores.chroma import ChromaVectorStore
+from polyrag.vector_stores.memory import InMemoryVectorStore
 
 
 class RAGService:

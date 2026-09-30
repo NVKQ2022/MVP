@@ -1,6 +1,6 @@
 """Recursive character chunker that splits hierarchically along natural text boundaries."""
 
-from rag_core.core.interfaces import BaseChunker
+from polyrag.core.interfaces import BaseChunker
 
 
 class RecursiveCharacterChunker(BaseChunker):

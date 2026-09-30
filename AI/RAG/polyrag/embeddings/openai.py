@@ -1,7 +1,7 @@
 """OpenAI Embedding implementation of BaseEmbeddingModel."""
 
 from typing import Any
-from rag_core.core.interfaces import BaseEmbeddingModel
+from polyrag.core.interfaces import BaseEmbeddingModel
 
 
 class OpenAIEmbedding(BaseEmbeddingModel):

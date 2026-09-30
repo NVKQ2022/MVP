@@ -3,13 +3,13 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rag-core-lib"
+name = "polyrag"
 version = "0.1.0"
-description = "A modular, extensible, and production-ready Retrieval-Augmented Generation (RAG) library."
+description = "A modular, multi-paradigm Retrieval-Augmented Generation (RAG) framework supporting Vector, Agentic, and Graph RAG architectures."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-keywords = ["rag", "llm", "agentic-rag", "vector-search", "embeddings", "react"]
+keywords = ["rag", "polyrag", "agentic-rag", "graphrag", "vector-search", "embeddings", "react", "llm"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -49,10 +49,10 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["rag_core*"]
+include = ["polyrag*"]
 
 [tool.setuptools.package-data]
-rag_core = ["py.typed"]
+polyrag = ["py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

@@ -4,7 +4,7 @@ import math
 from typing import Any
 import uuid
 
-from rag_core.core.interfaces import BaseVectorStore
+from polyrag.core.interfaces import BaseVectorStore
 
 
 class InMemoryVectorStore(BaseVectorStore):
