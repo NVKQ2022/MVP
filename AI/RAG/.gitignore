@@ -56,6 +56,8 @@ cython_debug/
 # chroma.sqlite3
 # *.sqlite3
 # *.db
+chroma_db/*/
+!chroma_db/c1bf437b-110d-4c3a-8f1f-d7af54db21d8/
 # lancedb/
 # faiss_index/
 # qdrant_storage/
