@@ -1,25 +1,22 @@
-"""Configuration loader - delegates to Clean Architecture Settings."""
+import os
 
-from src.infrastructure.config.settings import (
-    API_KEY,
-    CHROMA_COLLECTION,
-    CHROMA_PERSIST_DIR,
-    EMBEDDING_MODEL,
-    ENDPOINT,
-    MODEL_NAME,
-    PROVIDER,
-    Settings,
-    settings,
-)
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    def load_dotenv() -> bool:
+        return False
 
-__all__ = [
-    "ENDPOINT",
-    "PROVIDER",
-    "API_KEY",
-    "MODEL_NAME",
-    "EMBEDDING_MODEL",
-    "CHROMA_PERSIST_DIR",
-    "CHROMA_COLLECTION",
-    "Settings",
-    "settings",
-]
+load_dotenv()
+
+ENDPOINT = os.getenv("ENDPOINT", "").strip().strip('"').strip("'")
+PROVIDER = os.getenv("PROVIDER", "openai").strip().strip('"').strip("'")
+API_KEY = os.getenv("API_KEY", "").strip().strip('"').strip("'")
+MODEL_NAME = (os.getenv("MODEL_NAME") or os.getenv("LLM_MODEL") or "").strip().strip('"').strip("'")
+
+# Embeddings: now local Sentence-Transformers
+#EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2").strip().strip('"').strip("'")
+# Embeddings: use openai text-embedding-3-small (or text-embedding-3-large) for cloud-based embeddings
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small").strip().strip('"').strip("'")
+
+CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "chroma_db")
+CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "rfc_docs")
