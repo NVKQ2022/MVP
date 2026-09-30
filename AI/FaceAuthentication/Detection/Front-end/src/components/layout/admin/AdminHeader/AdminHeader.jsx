@@ -6,18 +6,18 @@ import { ThemeToggle } from '@/components/layout/shared/ThemeToggle';
 import { NotificationBell } from '@/components/layout/shared/NotificationBell';
 import { AdminSidebar } from '@/components/layout/admin/AdminSidebar';
 import { AdminUserMenu } from '@/components/layout/admin/AdminUserMenu';
-import { useLogin } from '@/features/auth';
+import { useAuth } from '@/features/auth';
 import { env } from '@/config/env';
 import styles from './AdminHeader.module.scss';
 
 export function AdminHeader({ title = 'Dashboard' }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { logout } = useLogin();
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
     const port = window.location.port ? `:${window.location.port}` : '';
-    window.location.assign(`http://${env.studentHost}${port}/login`);
+    window.location.assign(`http://${env.adminHost}${port}/login`);
   };
 
   return (

@@ -1,10 +1,14 @@
 import { Navigate } from 'react-router-dom';
-import { useLogin } from '@/features/auth/hooks/useLogin';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 export function StudentRoute({ children }) {
-  const { user } = useLogin();
+  const { user, status } = useAuth();
 
-  if (user?.role === 'admin') {
+  // if (status === 'idle' || status === 'loading') {
+  //   return null;
+  // }
+
+  if (user?.role === 'Admin') {
     return <Navigate to="/login" replace />;
   }
 

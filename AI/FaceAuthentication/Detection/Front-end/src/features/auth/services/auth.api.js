@@ -1,44 +1,32 @@
-import { checkUserPassword } from '@/features/users/mock-data';
+import apiClient from '@/services/api';
 
-export function loginRequest({ email, password }) {
-  const user = checkUserPassword(email, password);
-
-  if (!user) {
-    return Promise.resolve({
-      success: false,
-      message: 'Username or password is incorrect',
-    });
-  }
-
-  if (user.status === 'locked') {
-    return Promise.resolve({
-      success: false,
-      message: 'Your account is locked',
-    });
-  }
-
-  if (user.status === 'inactive') {
-    return Promise.resolve({
-      success: false,
-      message: 'Your account is inactive',
-    });
-  }
-
-  if (user.status === 'pending') {
-    return Promise.resolve({
-      success: false,
-      message: 'Your account is pending approval',
-    });
-  }
-
-  return Promise.resolve({
-    success: true,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role.toLowerCase(),
-    },
-    token: 'mock-token',
-  });
-}
+export const authApi = {
+  login: (credentials) => apiClient.post('/api/v1/Auth/login', credentials).then((res) => res.data),
+  faceLogin: (formData) =>
+    apiClient
+      .post('/api/v1/Auth/face-login', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then((res) => res.data),
+  faceRegister: (formData) =>
+    apiClient
+      .post('/api/v1/Auth/face-register', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then((res) => res.data),
+  register: (payload) => apiClient.post('/api/v1/Auth/register', payload).then((res) => res.data),
+  refresh: (refreshToken) =>
+    apiClient.post('/api/v1/Auth/refresh', { refreshToken }).then((res) => res.data),
+  verifyEmail: (payload) =>
+    apiClient.post('/api/v1/Auth/verify-email', payload).then((res) => res.data),
+  logout: (refreshToken) =>
+    apiClient.post('/api/v1/Auth/logout', { refreshToken }).then((res) => res.data),
+  register: (credentials) =>
+    apiClient.post('/api/v1/Auth/register', credentials).then((res) => res.data),
+  enableMfa: () => apiClient.post('/api/v1/Auth/enable-mfa').then((res) => res.data),
+  disableMfa: () => apiClient.post('/api/v1/Auth/disable-mfa').then((res) => res.data),
+};

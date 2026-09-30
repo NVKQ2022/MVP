@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge/badge';
 import { cn } from '@/utils/cn';
 import styles from './StatusBadge.module.scss';
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DataTable } from '@/components/common/DataTable';
 import { AppPagination } from '@/components/common/AppPagination';
@@ -7,135 +7,118 @@ import { Button } from '@/components/ui/button/button';
 import { Input } from '@/components/ui/input/input';
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu/dropdown-menu';
-import { ListFilter, Pencil, Plus, Search, Trash2 } from 'lucide-react';
-import { announcementsData } from '@/data/announcementsData';
-import StudentAnnouncements from '@/pages/student/Announcements';
+import { Archive, Check, ListFilter, MoreVertical, Pencil, Plus, Search, Send, Trash2 } from 'lucide-react';
+import { toast } from '@/components/common/Toaster/toast';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { ErrorState } from '@/components/common/ErrorState';
+import {
+  useAnnouncementsQuery,
+  useArchiveAnnouncement,
+  useDeleteAnnouncement,
+  usePublishAnnouncement,
+} from '@/features/AdminAnnouncement';
 
-const PAGE_SIZE = 5;
-
-const PRIORITY_LABEL = {
-  high: { label: 'High', variant: 'destructive' },
-  medium: { label: 'Medium', variant: 'default' },
-  low: { label: 'Low', variant: 'secondary' },
-};
+const PAGE_SIZE = 10;
 
 const STATUS_LABEL = {
-  published: { label: 'Published', variant: 'default' },
-  draft: { label: 'Draft', variant: 'outline' },
-  archived: { label: 'Archived', variant: 'secondary' },
+  Published: { label: 'Published', variant: 'default' },
+  Draft: { label: 'Draft', variant: 'outline' },
+  Archived: { label: 'Archived', variant: 'secondary' },
 };
 
-// Filter option lists
-const PRIORITY_OPTIONS = [
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
-];
-
 const STATUS_OPTIONS = [
-  { value: 'published', label: 'Published' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'archived', label: 'Archived' },
+  { value: 'PUBLISHED', label: 'Published' },
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'ARCHIVED', label: 'Archived' },
 ];
 
-const columns = [
+// Backend only supports filtering by a single status at a time, so the
+// filter below is single-select rather than the checkbox multi-select it
+// used to be.
+const ALL_STATUS = 'ALL';
+
+const buildColumns = (onOpenDetail) => [
   {
     key: 'title',
     header: 'Title',
-    render: (row) => <span className="admin-announcements__row-title">{row.title}</span>,
+    render: (row) => (
+      <span
+        className="admin-announcements__row-title admin-announcements__row-title--clickable"
+        role="button"
+        tabIndex={0}
+        onClick={() => onOpenDetail(row)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpenDetail(row);
+          }
+        }}
+      >
+        {row.title}
+      </span>
+    ),
   },
   {
-    key: 'category',
-    header: 'Category',
-  },
-  {
-    key: 'author',
+    key: 'creatorName',
     header: 'Posted by',
   },
   {
-    key: 'postedDate',
-    header: 'Posted on',
-    render: (row) => new Date(row.postedDate).toLocaleDateString('en-US'),
+    key: 'publishedAt',
+    header: 'Published',
+    render: (row) => (row.publishedAt ? new Date(row.publishedAt).toLocaleDateString('en-US') : '-'),
   },
   {
-    key: 'priority',
-    header: 'Priority',
-    render: (row) => {
-      const p = PRIORITY_LABEL[row.priority] ?? { label: row.priority, variant: 'default' };
-      return <Badge variant={p.variant}>{p.label}</Badge>;
-    },
-  },
-  {
-    key: 'status',
+    key: 'publicationStatus',
     header: 'Status',
     render: (row) => {
-      const s = STATUS_LABEL[row.status] ?? { label: row.status, variant: 'default' };
+      const s = STATUS_LABEL[row.publicationStatus] ?? { label: row.publicationStatus, variant: 'default' };
       return <Badge variant={s.variant}>{s.label}</Badge>;
     },
   },
 ];
 
-const AdminAnnouncements = ({
-  data = announcementsData,
-  loading = false,
-  onDelete, // (ids: string[]) => void — called with the selected row ids
-}) => {
+const AdminAnnouncements = () => {
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState(new Set());
-  const [statusFilter, setStatusFilter] = useState(new Set());
+  const [statusFilter, setStatusFilter] = useState(ALL_STATUS);
 
-  const filteredData = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+  } = useAnnouncementsQuery({
+    pageNumber: currentPage,
+    pageSize: PAGE_SIZE,
+    search: searchQuery.trim() || undefined,
+    status: statusFilter !== ALL_STATUS ? statusFilter : undefined,
+  });
 
-    return data.filter((row) => {
-      const matchesSearch =
-        !query ||
-        row.title?.toLowerCase().includes(query) ||
-        row.category?.toLowerCase().includes(query) ||
-        row.author?.toLowerCase().includes(query);
+  const deleteMutation = useDeleteAnnouncement();
+  const publishMutation = usePublishAnnouncement();
+  const archiveMutation = useArchiveAnnouncement();
 
-      const matchesPriority = priorityFilter.size === 0 || priorityFilter.has(row.priority);
-
-      const matchesStatus = statusFilter.size === 0 || statusFilter.has(row.status);
-
-      return matchesSearch && matchesPriority && matchesStatus;
-    });
-  }, [data, searchQuery, priorityFilter, statusFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE));
-
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredData.slice(start, start + PAGE_SIZE);
-  }, [filteredData, currentPage]);
+  const items = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1);
   };
 
-  const toggleFilterValue = (setFn) => (value, checked) => {
-    setFn((prev) => {
-      const next = new Set(prev);
-      checked ? next.add(value) : next.delete(value);
-      return next;
-    });
+  const handleStatusFilterChange = (value) => {
+    setStatusFilter(value);
     setCurrentPage(1);
   };
-
-  const togglePriorityValue = toggleFilterValue(setPriorityFilter);
-  const toggleStatusValue = toggleFilterValue(setStatusFilter);
 
   const handleSelectRow = (key, checked) => {
     setSelectedRows((prev) => {
@@ -146,24 +129,50 @@ const AdminAnnouncements = ({
   };
 
   const handleSelectAll = (checked) => {
-    setSelectedRows(checked ? new Set(filteredData.map((row) => row.id)) : new Set());
+    setSelectedRows(checked ? new Set(items.map((row) => row.id)) : new Set());
   };
 
   const handleDeleteClick = () => {
     setConfirmOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     const ids = Array.from(selectedRows);
 
-    // TODO: Call API delete announcement here.
-    if (onDelete) {
-      onDelete(ids);
-    } else {
-      console.log('delete', ids);
+    const results = await Promise.allSettled(
+      ids.map((id) => deleteMutation.mutateAsync(id))
+    );
+
+    const failed = [];
+    const succeededIds = [];
+
+    results.forEach((result, index) => {
+      const id = ids[index];
+      if (result.status === 'fulfilled') {
+        succeededIds.push(id);
+      } else {
+        const row = items.find((item) => item.id === id);
+        failed.push({ id, title: row?.title ?? id, error: result.reason });
+      }
+    });
+
+    setSelectedRows(new Set(failed.map((item) => item.id)));
+
+    if (failed.length > 0) {
+      failed.forEach((item) => console.error(`Failed to delete announcement ${item.id}:`, item.error));
     }
 
-    setSelectedRows(new Set());
+    if (succeededIds.length > 0 && failed.length === 0) {
+      toast.success(`Deleted ${succeededIds.length} announcement${succeededIds.length > 1 ? 's' : ''}`);
+    } else if (failed.length > 0) {
+      const prefix =
+        succeededIds.length > 0
+          ? `Deleted ${succeededIds.length}, failed to delete ${failed.length}`
+          : 'Failed to delete announcements';
+      toast.error(prefix, {
+        description: `Could not delete: ${failed.map((item) => item.title).join(', ')}`,
+      });
+    }
   };
 
   const handleCreate = () => {
@@ -171,24 +180,96 @@ const AdminAnnouncements = ({
   };
 
   const handleUpdate = (row) => {
-    navigate(`/announcements/${row.id}`, { state: { announcement: row } });
+    navigate(`/announcements/edit/${row.id}`);
   };
 
-  const actions = useMemo(
-    () => (row) => (
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => handleUpdate(row)}
-        aria-label={`Update announcement ${row.title}`}
-      >
-        <Pencil className="admin-announcements__row-action-icon" />
-      </Button>
-    ),
-    [],
+  const handleOpenDetail = (row) => {
+    navigate(`/announcements/${row.id}`);
+  };
+
+  const handlePublish = async (row) => {
+    if (!canPublish(row)) return;
+    try {
+      await publishMutation.mutateAsync(row.id);
+      toast.success(`Published "${row.title}"`);
+    } catch (error) {
+      console.error(`Failed to publish announcement ${row.id}:`, error);
+      toast.error('Failed to publish announcement', {
+        description: error?.message ?? 'Please try again.',
+      });
+    }
+  };
+
+  const handleArchive = async (row) => {
+    if (!canArchive(row)) return;
+    try {
+      await archiveMutation.mutateAsync(row.id);
+      toast.success(`Archived "${row.title}"`);
+    } catch (error) {
+      console.error(`Failed to archive announcement ${row.id}:`, error);
+      toast.error('Failed to archive announcement', {
+        description: error?.message ?? 'Please try again.',
+      });
+    }
+  };
+
+  const canUpdate = (row) => row.publicationStatus === 'DRAFT';
+  const canPublish = (row) => row.publicationStatus === 'DRAFT';
+  const canArchive = (row) => row.publicationStatus === 'PUBLISHED';
+
+  const columns = buildColumns(handleOpenDetail);
+
+  const actions = (row) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Open actions for announcement ${row.title}`}
+        >
+          <MoreVertical className="admin-announcements__row-action-icon" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          disabled={!canUpdate(row)}
+          onSelect={() => handleUpdate(row)}
+        >
+          <Pencil className="admin-announcements__row-menu-icon" />
+          Update
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={!canPublish(row)}
+          onSelect={() => handlePublish(row)}
+        >
+          <Send className="admin-announcements__row-menu-icon" />
+          Publish
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={!canArchive(row)}
+          onSelect={() => handleArchive(row)}
+        >
+          <Archive className="admin-announcements__row-menu-icon" />
+          Archive
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 
-  const activeFilterCount = priorityFilter.size + statusFilter.size;
+  const hasActiveStatusFilter = statusFilter !== ALL_STATUS;
+
+  if (isError) {
+    return (
+      <div className="admin-announcements">
+        <h2 className="admin-announcements__title">Admin Announcements</h2>
+        <ErrorState
+          title="Failed to load announcements"
+          description="We couldn't load the announcements list. Please try again."
+          onRetry={refetch}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="admin-announcements">
@@ -229,38 +310,10 @@ const AdminAnnouncements = ({
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
               <ListFilter className="admin-announcements__btn-icon" />
-              Priority
-              {priorityFilter.size > 0 && (
-                <Badge variant="secondary" className="admin-announcements__filter-badge">
-                  {priorityFilter.size}
-                </Badge>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuLabel>Filter by priority</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {PRIORITY_OPTIONS.map((opt) => (
-              <DropdownMenuCheckboxItem
-                key={opt.value}
-                checked={priorityFilter.has(opt.value)}
-                onCheckedChange={(checked) => togglePriorityValue(opt.value, checked)}
-                onSelect={(e) => e.preventDefault()}
-              >
-                {opt.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <ListFilter className="admin-announcements__btn-icon" />
               Status
-              {statusFilter.size > 0 && (
+              {hasActiveStatusFilter && (
                 <Badge variant="secondary" className="admin-announcements__filter-badge">
-                  {statusFilter.size}
+                  {STATUS_OPTIONS.find((opt) => opt.value === statusFilter)?.label ?? statusFilter}
                 </Badge>
               )}
             </Button>
@@ -268,26 +321,31 @@ const AdminAnnouncements = ({
           <DropdownMenuContent align="start">
             <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => handleStatusFilterChange(ALL_STATUS)}>
+              <Check
+                className="admin-announcements__check-icon"
+                style={{ visibility: statusFilter === ALL_STATUS ? 'visible' : 'hidden' }}
+              />
+              All statuses
+            </DropdownMenuItem>
             {STATUS_OPTIONS.map((opt) => (
-              <DropdownMenuCheckboxItem
-                key={opt.value}
-                checked={statusFilter.has(opt.value)}
-                onCheckedChange={(checked) => toggleStatusValue(opt.value, checked)}
-                onSelect={(e) => e.preventDefault()}
-              >
+              <DropdownMenuItem key={opt.value} onSelect={() => handleStatusFilterChange(opt.value)}>
+                <Check
+                  className="admin-announcements__check-icon"
+                  style={{ visibility: statusFilter === opt.value ? 'visible' : 'hidden' }}
+                />
                 {opt.label}
-              </DropdownMenuCheckboxItem>
+              </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {activeFilterCount > 0 && (
+        {hasActiveStatusFilter && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              setPriorityFilter(new Set());
-              setStatusFilter(new Set());
+              setStatusFilter(ALL_STATUS);
               setCurrentPage(1);
             }}
           >
@@ -298,9 +356,9 @@ const AdminAnnouncements = ({
 
       <DataTable
         columns={columns}
-        data={paginatedData}
+        data={items}
         rowKey={(row) => row.id}
-        loading={loading}
+        loading={isLoading}
         selectable
         selectedRows={selectedRows}
         onSelectRow={handleSelectRow}

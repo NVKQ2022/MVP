@@ -1,5 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import styles from './ErrorState.module.scss';
 
 export function ErrorState({

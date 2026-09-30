@@ -4,6 +4,7 @@ import { studentRoutes } from './student.routes';
 import { adminRoutes } from './admin.routes';
 import { authRoutes } from './auth.routes';
 import { rootRoutes } from './root.routes';
+import { Toaster } from '@/components/common/Toaster/Toaster';
 
 function buildRoutes() {
   const domain = getAppDomain();
@@ -22,5 +23,10 @@ function buildRoutes() {
 const router = createBrowserRouter(buildRoutes());
 
 export function AppRouter() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster />
+    </>
+  );
 }

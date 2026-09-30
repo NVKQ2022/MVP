@@ -1,0 +1,45 @@
+.settings_wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 1.5rem;
+}
+
+.settings_row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.settings_info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    min-width: 0;
+}
+
+.settings_title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.settings_description {
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+    max-width: 40rem;
+}
+
+.setup_dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.setup_error {
+    font-size: 0.875rem;
+    color: var(--destructive);
+}

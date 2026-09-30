@@ -4,7 +4,9 @@ import StudentProfile from '@/pages/student/Profile';
 import StudentAnnouncements from '@/pages/student/Announcements';
 import AnnouncementDetail from '@/pages/student/AnnouncementDetail';
 import NotFound from '@/pages/errors/NotFound';
+import { StudentSettings } from '@/components/layout/student/StudentSettings';
 import { StudentRoute } from './StudentRoute';
+import { ProtectedRoute } from './ProtectedRoute';
 
 export const studentRoutes = [
   {
@@ -16,9 +18,31 @@ export const studentRoutes = [
     ),
     children: [
       { index: true, element: <StudentHome /> },
-      { path: 'profile', element: <StudentProfile /> },
-      { path: 'announcements', element: <StudentAnnouncements /> },
-      { path: 'announcements/:id', element: <AnnouncementDetail /> },
+      { path: 'settings', element: <StudentSettings /> },
+      {
+        path: 'profile',
+        element: (
+          <ProtectedRoute>
+            <StudentProfile />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'announcements',
+        element: (
+          <ProtectedRoute>
+            <StudentAnnouncements />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'announcements/:id',
+        element: (
+          <ProtectedRoute>
+            <AnnouncementDetail />
+          </ProtectedRoute>
+        ),
+      },
 
       { path: '*', element: <NotFound /> },
     ],

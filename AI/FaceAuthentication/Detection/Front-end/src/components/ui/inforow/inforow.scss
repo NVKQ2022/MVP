@@ -1,0 +1,27 @@
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.info-row-label {
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+    flex-shrink: 0;
+}
+
+.info-row-value {
+    font-size: 0.875rem;
+    text-align: right;
+    word-break: break-word;
+
+    // Equivalent to: data-[truncate=true]:...
+    &[data-truncate='true'] {
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: default;
+    }
+}

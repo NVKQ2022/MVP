@@ -4,12 +4,21 @@ import AdminUsers from '@/pages/admin/Users';
 import AdminUserDetail from '@/pages/admin/UserDetail';
 import AdminWhitelist from '@/pages/admin/Whitelist';
 import AdminAnnouncements from '@/pages/admin/Announcements';
-import AdminAnnouncementDetail from '@/pages/admin/AnnouncementDetail';
+import { AdminAnnouncementDetail, AdminAnnouncementWriteDetail } from '@/pages/admin/AnnouncementDetail';
 import AdminAuditLogs from '@/pages/admin/AuditLogs';
+import AdminAuditLogDetail from '@/pages/admin/AuditLogDetail';
 import NotFound from '@/pages/errors/NotFound';
+import AuthCallback from '@/pages/auth/Callback';
+import { AdminSettings } from '@/components/layout/admin/AdminSettings';
 import { AdminRoute } from './AdminRoute';
 
 export const adminRoutes = [
+  {
+    // Must sit OUTSIDE AdminRoute — the session doesn't exist on this
+    // origin yet when this route is hit.
+    path: '/auth/callback',
+    element: <AuthCallback />,
+  },
   {
     path: '/',
     element: (
@@ -23,9 +32,12 @@ export const adminRoutes = [
       { path: 'users/:id', element: <AdminUserDetail /> },
       { path: 'whitelist', element: <AdminWhitelist /> },
       { path: 'announcements', element: <AdminAnnouncements /> },
-      { path: 'announcements/create', element: <AdminAnnouncementDetail /> },
+      { path: 'announcements/create', element: <AdminAnnouncementWriteDetail /> },
+      { path: 'announcements/edit/:id', element: <AdminAnnouncementWriteDetail /> },
       { path: 'announcements/:id', element: <AdminAnnouncementDetail /> },
       { path: 'audit-logs', element: <AdminAuditLogs /> },
+      { path: 'audit-log/:id', element: <AdminAuditLogDetail /> },
+      { path: 'settings', element: <AdminSettings /> },
 
       { path: '*', element: <NotFound /> },
     ],
