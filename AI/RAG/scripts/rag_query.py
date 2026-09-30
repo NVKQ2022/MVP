@@ -9,7 +9,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import API_KEY, CHROMA_COLLECTION, CHROMA_PERSIST_DIR, EMBEDDING_MODEL, ENDPOINT, MODEL_NAME
 from embedding import EmbeddingService
-from vectordb import VectorDB
+from vectordb import ChromaVectorDB
 from openai import OpenAI
 
 
@@ -22,7 +22,7 @@ def main():
     args = p.parse_args()
 
     persist_dir = (PROJECT_ROOT / args.persist_dir).resolve() if not args.persist_dir.is_absolute() else args.persist_dir
-    db = VectorDB(str(persist_dir), args.collection)
+    db = ChromaVectorDB(str(persist_dir), args.collection)
     embedder = EmbeddingService(model_name=EMBEDDING_MODEL)
 
     results = db.search(embedder.embed_text(args.query), top_k=args.top_k)

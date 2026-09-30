@@ -18,7 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import CHROMA_COLLECTION, CHROMA_PERSIST_DIR
-from vectordb import VectorDB
+from vectordb import ChromaVectorDB
 
 
 def get_dir_size_str(path: Path) -> str:
@@ -35,7 +35,7 @@ def get_dir_size_str(path: Path) -> str:
 
 def get_chroma_info(persist_dir: Path, collection_name: str, sample_limit: int = 2) -> dict:
     """Retrieve metadata and stats from ChromaDB."""
-    db = VectorDB(persist_directory=str(persist_dir), collection_name=collection_name)
+    db = ChromaVectorDB(persist_directory=str(persist_dir), collection_name=collection_name)
     col = db.collection
 
     total_count = db.count()
