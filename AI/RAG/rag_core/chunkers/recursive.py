@@ -9,20 +9,17 @@ class RecursiveCharacterChunker(BaseChunker):
     def __init__(
         self,
         chunk_size: int = 550,
-        overlap: int = 35,
+        chunk_overlap: int = 35,
         separators: list[str] | None = None,
         drop_empty: bool = True,
-        chunk_overlap: int | None = None,
     ) -> None:
-        if chunk_overlap is not None:
-            overlap = chunk_overlap
         if chunk_size <= 0:
             raise ValueError("chunk_size must be greater than 0")
-        if overlap < 0 or overlap >= chunk_size:
-            raise ValueError("overlap must be >= 0 and < chunk_size")
+        if chunk_overlap < 0 or chunk_overlap >= chunk_size:
+            raise ValueError("chunk_overlap must be >= 0 and < chunk_size")
 
         self.chunk_size = chunk_size
-        self.overlap = overlap
+        self.chunk_overlap = chunk_overlap
         self.separators = separators or ["\n\n", "\n", ". ", " ", ""]
         self.drop_empty = drop_empty
 
@@ -74,7 +71,7 @@ class RecursiveCharacterChunker(BaseChunker):
                     overlap_chunk: list[str] = []
                     overlap_len = 0
                     for p in reversed(current_chunk):
-                        if overlap_len + len(p) <= self.overlap:
+                        if overlap_len + len(p) <= self.chunk_overlap:
                             overlap_chunk.insert(0, p)
                             overlap_len += len(p)
                         else:

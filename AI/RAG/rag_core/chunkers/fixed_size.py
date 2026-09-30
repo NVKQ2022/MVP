@@ -9,28 +9,25 @@ class FixedSizeChunker(BaseChunker):
     def __init__(
         self,
         chunk_size: int = 550,
-        overlap: int = 35,
+        chunk_overlap: int = 35,
         drop_empty: bool = True,
-        chunk_overlap: int | None = None,
     ) -> None:
-        if chunk_overlap is not None:
-            overlap = chunk_overlap
         if chunk_size <= 0:
             raise ValueError("chunk_size must be greater than 0")
-        if overlap < 0:
-            raise ValueError("overlap must be >= 0")
-        if overlap >= chunk_size:
-            raise ValueError("overlap must be smaller than chunk_size")
+        if chunk_overlap < 0:
+            raise ValueError("chunk_overlap must be >= 0")
+        if chunk_overlap >= chunk_size:
+            raise ValueError("chunk_overlap must be smaller than chunk_size")
 
         self.chunk_size = chunk_size
-        self.overlap = overlap
+        self.chunk_overlap = chunk_overlap
         self.drop_empty = drop_empty
 
     def chunk(self, text: str) -> list[str]:
         if self.drop_empty and not text.strip():
             return []
 
-        step = self.chunk_size - self.overlap
+        step = self.chunk_size - self.chunk_overlap
         chunks: list[str] = []
 
         for start in range(0, len(text), step):
