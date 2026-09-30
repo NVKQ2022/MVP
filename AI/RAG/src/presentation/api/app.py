@@ -16,22 +16,7 @@ def create_app(container: Container | None = None) -> FastAPI:
     """Create and configure FastAPI application instance."""
     app_container = container or default_container
 
-    app = FastAPI(
-        title="RFC Agentic RAG API",
-        version="2.0.0",
-        description="Clean Architecture RAG & Agentic RAG Web API for Technical RFC Specifications",
-    )
-
-    # Static frontend directory
-    project_root = Path(__file__).resolve().parents[3]
-    static_dir = project_root / "static"
-
-    if static_dir.exists():
-        app.mount(
-            "/static",
-            StaticFiles(directory=str(static_dir)),
-            name="static",
-        )
+    from contextlib import asynccontextmanager
 
     # Lazy-loaded runtime use cases
     state: dict[str, Any] = {
@@ -40,8 +25,8 @@ def create_app(container: Container | None = None) -> FastAPI:
         "llm_available": False,
     }
 
-    @app.on_event("startup")
-    def on_startup() -> None:
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
         try:
             naive_rag = app_container.build_naive_rag()
             state["naive_rag"] = naive_rag
@@ -54,6 +39,24 @@ def create_app(container: Container | None = None) -> FastAPI:
                 )
         except Exception as e:
             print(f"[API] Error during startup initialization: {e}")
+        yield
+
+    app = FastAPI(
+        title="RFC Agentic RAG API",
+        version="2.0.0",
+        description="Clean Architecture RAG & Agentic RAG Web API for Technical RFC Specifications",
+        lifespan=lifespan,
+    )
+
+    project_root = Path(__file__).resolve().parents[3]
+    static_dir = project_root / "static"
+
+    if static_dir.exists():
+        app.mount(
+            "/static",
+            StaticFiles(directory=str(static_dir)),
+            name="static",
+        )
 
     @app.get("/health")
     def health() -> dict[str, Any]:
