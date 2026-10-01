@@ -12,9 +12,7 @@ if str(ROOT_DIR) not in sys.path:
 
 def run_diagnose_cli(image_path: str, pipeline: str = "naive", top_k: int = 2) -> None:
     """Run full end-to-end diagnosis directly from the terminal."""
-    from OCR.services.codec.image_codec import ImageCodecService
     from OCR.services.orchestrator.ocr_orchestrator import OCROrchestratorService
-    from OCR.services.parser.rule_extractor import rule_extractor
     from RAG.services.rag_engine import RAGEngine
 
     path = Path(image_path)
@@ -29,34 +27,19 @@ def run_diagnose_cli(image_path: str, pipeline: str = "naive", top_k: int = 2) -
     img_bytes = path.read_bytes()
     ocr_res = ocr.process_image(payload=img_bytes, min_confidence=0.4, sort_reading_order=True)
 
-    print("\n" + "=" * 65)
-    print("⚙️ STEP 2: Running Deterministic Rule-Based Extraction (NO LLM)...")
-    print("=" * 65)
-    lines = [item.text for item in ocr_res.lines]
-    extracted = rule_extractor.extract(full_text=ocr_res.full_text, lines=lines)
-    print(f"• Error Codes:   {extracted.error_codes}")
-    print(f"• Error Message: {extracted.error_message}")
-    print(f"• Details:       {extracted.details}")
-    if extracted.product:
-        print(f"• Product:       {extracted.product}")
+    print("\n📝 Recognized OCR Text:")
+    print("─" * 65)
+    print(ocr_res.full_text)
+    print("─" * 65)
 
     print("\n" + "=" * 65)
-    print(f"📚 STEP 3: Querying PolyRAG Knowledge Base ({pipeline.upper()})...")
+    print(f"📚 STEP 2: Querying PolyRAG Knowledge Base ({pipeline.upper()})...")
     print("=" * 65)
     rag = RAGEngine()
     if rag.vector_store.count() == 0:
         rag.ingest_kb_documents()
 
-    query_parts = []
-    if extracted.error_codes:
-        query_parts.append(" ".join(extracted.error_codes))
-    if extracted.error_message:
-        query_parts.append(extracted.error_message)
-    if extracted.details:
-        query_parts.append(extracted.details)
-    query_str = " ".join(query_parts) if query_parts else ocr_res.full_text[:150]
-
-    prompt = f"Troubleshoot customer error: {query_str}"
+    prompt = f"Customer screenshot error text:\n{ocr_res.full_text}\n\nProvide troubleshooting steps."
     if pipeline == "advanced":
         rag_res = rag.query_advanced(prompt, top_k=top_k)
     elif pipeline == "agentic":

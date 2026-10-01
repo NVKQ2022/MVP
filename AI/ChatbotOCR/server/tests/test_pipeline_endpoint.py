@@ -27,13 +27,12 @@ def test_pipeline_diagnose_multipart_endpoint():
 
     assert "answer" in data
     assert len(data["answer"]) > 0
-    assert "extracted_info" in data
+    assert "ocr_text" in data
     assert "sources" in data
     assert len(data["sources"]) > 0
 
-    # Verify extracted error code from image
-    extracted = data["extracted_info"]
-    assert any("AUTH-401" in code or "401" in code for code in extracted.get("error_codes", []))
+    # Verify recognized error text from image
+    assert "401" in data["ocr_text"]
     assert "KB-AUTH-001" in str(data["sources"])
 
 

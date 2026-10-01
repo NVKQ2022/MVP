@@ -1,14 +1,12 @@
-"""End-to-End Pipeline Routes: OCR Screenshot Extraction -> PolyRAG Knowledge Retrieval -> Grounded Support Answer."""
+"""End-to-End Pipeline Routes: OCR Screenshot Extraction -> PolyRAG Knowledge Retrieval -> Support Answer."""
 
 import time
 from typing import Any, Optional
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
-from OCR.schemas.request_schemas import OCRPredictRequest
 from OCR.services.codec.image_codec import ImageCodecError
 from OCR.services.orchestrator.ocr_orchestrator import OCROrchestratorService
-from OCR.services.parser.rule_extractor import ExtractedIssue, rule_extractor
 from RAG.services.rag_engine import RAGEngine
 from server.dependencies import get_ocr_orchestrator, get_rag_engine
 
@@ -16,14 +14,14 @@ pipeline_router = APIRouter(prefix="/api/v1/pipeline", tags=["Pipeline"])
 
 
 class PipelineDiagnosisResponse(BaseModel):
-    """Unified response containing OCR extracted issue, retrieved sources, and generated resolution."""
+    """Response containing OCR recognized text, retrieved sources, and generated resolution."""
 
     answer: str = Field(..., description="Grounded support answer generated from knowledge base.")
-    extracted_info: ExtractedIssue = Field(..., description="Structured issue extracted without LLM.")
+    ocr_text: str = Field(..., description="Raw text extracted from the screenshot via OCR.")
     sources: list[dict[str, Any]] = Field(default_factory=list, description="Retrieved KB sources and references.")
     pipeline_used: str = Field(default="naive", description="RAG pipeline used: naive, advanced, or agentic.")
-    took_ms: int = Field(default=0, description="Total end-to-end execution latency in milliseconds.")
-    confidence: float = Field(default=1.0, description="Confidence score of the resolution.")
+    took_ms: int = Field(default=0, description="Total execution latency in milliseconds.")
+    confidence: float = Field(default=1.0, description="Confidence score.")
 
 
 class PipelineJsonRequest(BaseModel):
@@ -36,47 +34,33 @@ class PipelineJsonRequest(BaseModel):
     top_k: int = Field(default=2, ge=1, le=10, description="Number of knowledge articles to retrieve.")
 
 
-def _build_search_query(extracted: ExtractedIssue, user_message: Optional[str] = None) -> str:
-    """Build a search query from OCR extracted context and optional user message."""
-    query_parts = []
-
-    # Priority 1: User message if provided
+def _build_rag_prompt(ocr_text: str, user_message: Optional[str] = None) -> str:
+    """Build a search/prompt query feeding the OCR text directly into PolyRAG."""
+    parts = []
     if user_message and user_message.strip():
-        query_parts.append(user_message.strip())
+        parts.append(f"User Query: {user_message.strip()}")
 
-    # Priority 2: Extracted error codes
-    if extracted.error_codes:
-        query_parts.append(" ".join(extracted.error_codes))
+    clean_ocr = (ocr_text or "").strip()
+    if clean_ocr:
+        parts.append(f"Screenshot Error Text:\n{clean_ocr}")
 
-    # Priority 3: Extracted error message
-    if extracted.error_message:
-        query_parts.append(extracted.error_message)
-
-    # Priority 4: Extracted details
-    if extracted.details:
-        query_parts.append(extracted.details)
-
-    # Fallback to raw text if no fields extracted
-    if not query_parts and extracted.raw_text:
-        query_parts.append(extracted.raw_text[:200])
-
-    return " ".join(query_parts) if query_parts else "General system error"
+    return "\n\n".join(parts) if parts else "Customer encountered a system error."
 
 
 def _execute_rag(
     rag_engine: RAGEngine,
-    query: str,
+    prompt: str,
     pipeline_mode: str,
     top_k: int,
 ) -> tuple[str, list[dict[str, Any]], float]:
     """Execute the selected PolyRAG pipeline mode."""
     mode = pipeline_mode.lower()
     if mode == "advanced":
-        response = rag_engine.query_advanced(question=query, top_k=top_k)
+        response = rag_engine.query_advanced(question=prompt, top_k=top_k)
     elif mode == "agentic":
-        response = rag_engine.query_agentic(question=query, top_k=top_k)
+        response = rag_engine.query_agentic(question=prompt, top_k=top_k)
     else:
-        response = rag_engine.query_naive(question=query, top_k=top_k)
+        response = rag_engine.query_naive(question=prompt, top_k=top_k)
 
     sources = []
     for s in response.sources:
@@ -100,13 +84,10 @@ async def diagnose_uploaded_screenshot(
     rag_engine: RAGEngine = Depends(get_rag_engine),
 ) -> PipelineDiagnosisResponse:
     """
-    Full End-to-End Pipeline:
-    1. Receives uploaded screenshot image file.
-    2. Runs PaddleOCR to extract text.
-    3. Runs deterministic rule-based extractor to get structured error info (NO LLM).
-    4. Constructs retrieval query from extracted context and user message.
-    5. Retrieves matching knowledge from PolyRAG vector database.
-    6. Generates grounded support troubleshooting response using LLM.
+    Direct Screenshot-to-RAG Pipeline:
+    1. Extracts text from the uploaded screenshot via PaddleOCR.
+    2. Feeds the OCR text directly into PolyRAG to retrieve matching knowledge.
+    3. Generates a grounded resolution using the retrieved context.
     """
     start_time = time.time()
     try:
@@ -114,7 +95,7 @@ async def diagnose_uploaded_screenshot(
         if not image_bytes:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded file is empty.")
 
-        # Step 1: OCR Extraction
+        # Step 1: Direct OCR Extraction
         ocr_result = ocr_orchestrator.process_image(
             payload=image_bytes,
             is_url=False,
@@ -122,15 +103,11 @@ async def diagnose_uploaded_screenshot(
             sort_reading_order=True,
         )
 
-        # Step 2: Rule-Based Extraction (NO LLM)
-        line_texts = [item.text for item in ocr_result.lines]
-        extracted = rule_extractor.extract(full_text=ocr_result.full_text, lines=line_texts)
-
-        # Step 3: Query PolyRAG
-        search_query = _build_search_query(extracted, message)
+        # Step 2: Feed OCR text directly into PolyRAG
+        rag_prompt = _build_rag_prompt(ocr_result.full_text, message)
         answer, sources, confidence = _execute_rag(
             rag_engine=rag_engine,
-            query=f"Troubleshoot customer error: {search_query}",
+            prompt=rag_prompt,
             pipeline_mode=pipeline,
             top_k=top_k,
         )
@@ -139,7 +116,7 @@ async def diagnose_uploaded_screenshot(
 
         return PipelineDiagnosisResponse(
             answer=answer,
-            extracted_info=extracted,
+            ocr_text=ocr_result.full_text,
             sources=sources,
             pipeline_used=pipeline,
             took_ms=total_ms,
@@ -161,7 +138,7 @@ def diagnose_json_screenshot(
     ocr_orchestrator: OCROrchestratorService = Depends(get_ocr_orchestrator),
     rag_engine: RAGEngine = Depends(get_rag_engine),
 ) -> PipelineDiagnosisResponse:
-    """Full End-to-End Pipeline on Base64 string or remote image URL."""
+    """Direct Screenshot-to-RAG Pipeline on Base64 string or remote image URL."""
     start_time = time.time()
     try:
         payload = request.image_url if request.image_url else request.image_base64
@@ -171,7 +148,7 @@ def diagnose_json_screenshot(
                 detail="Either 'image_base64' or 'image_url' must be provided.",
             )
 
-        # Step 1: OCR Extraction
+        # Step 1: Direct OCR Extraction
         ocr_result = ocr_orchestrator.process_image(
             payload=payload,
             is_url=bool(request.image_url),
@@ -179,15 +156,11 @@ def diagnose_json_screenshot(
             sort_reading_order=True,
         )
 
-        # Step 2: Rule-Based Extraction
-        line_texts = [item.text for item in ocr_result.lines]
-        extracted = rule_extractor.extract(full_text=ocr_result.full_text, lines=line_texts)
-
-        # Step 3: Query PolyRAG
-        search_query = _build_search_query(extracted, request.message)
+        # Step 2: Feed OCR text directly into PolyRAG
+        rag_prompt = _build_rag_prompt(ocr_result.full_text, request.message)
         answer, sources, confidence = _execute_rag(
             rag_engine=rag_engine,
-            query=f"Troubleshoot customer error: {search_query}",
+            prompt=rag_prompt,
             pipeline_mode=request.pipeline,
             top_k=request.top_k,
         )
@@ -196,7 +169,7 @@ def diagnose_json_screenshot(
 
         return PipelineDiagnosisResponse(
             answer=answer,
-            extracted_info=extracted,
+            ocr_text=ocr_result.full_text,
             sources=sources,
             pipeline_used=request.pipeline,
             took_ms=total_ms,

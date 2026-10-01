@@ -52,9 +52,18 @@ class RAGEngine:
             chunk_overlap=rag_settings.chunk_overlap,
         )
 
-        # 2. Initialize Embeddings
-        logger.info(f"Initializing SentenceTransformerEmbedding with model: {self.embedding_model_name}")
-        self.embedding_model = SentenceTransformerEmbedding(model_name=self.embedding_model_name)
+        # 2. Initialize Embeddings (OpenAI or Local Sentence Transformers)
+        if self.embedding_model_name.startswith("text-embedding") and rag_settings.openai_api_key:
+            from polyrag import OpenAIEmbedding
+            logger.info(f"Initializing OpenAIEmbedding with model: {self.embedding_model_name}")
+            self.embedding_model = OpenAIEmbedding(
+                model_name=self.embedding_model_name,
+                base_url=rag_settings.openai_base_url,
+                api_key=rag_settings.openai_api_key,
+            )
+        else:
+            logger.info(f"Initializing SentenceTransformerEmbedding with model: {self.embedding_model_name}")
+            self.embedding_model = SentenceTransformerEmbedding(model_name=self.embedding_model_name)
 
         # 3. Initialize Vector Store (ChromaDB or InMemory)
         if use_in_memory:
