@@ -1,0 +1,30 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Demo and runtime outputs
+demo_output/
+*.log
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
