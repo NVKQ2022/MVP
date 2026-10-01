@@ -89,3 +89,38 @@ def test_ocr_predict_missing_payload(test_client):
     }
     response = test_client.post("/api/v1/ocr/predict", json=payload)
     assert response.status_code == 422
+
+
+def test_ui_root_endpoint(test_client):
+    """Tests that GET / serves the Web UI single-page application."""
+    response = test_client.get("/")
+    assert response.status_code == 200
+    assert "SupportBot AI" in response.text
+    assert "text/html" in response.headers.get("content-type", "")
+
+
+def test_pipeline_samples_endpoint(test_client):
+    """Tests GET /api/v1/pipeline/samples returns curated screenshots."""
+    response = test_client.get("/api/v1/pipeline/samples")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) > 0
+    assert "file" in data[0]
+    assert "article_id" in data[0]
+
+
+def test_pipeline_diagnose_text_followup(test_client):
+    """Tests POST /api/v1/pipeline/diagnose-json without image for conversational follow-up."""
+    payload = {
+        "message": "What should I do if my authentication token expires?",
+        "pipeline": "naive",
+        "top_k": 2,
+    }
+    response = test_client.post("/api/v1/pipeline/diagnose-json", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "answer" in data
+    assert len(data["answer"]) > 0
+    assert len(data["sources"]) > 0
+

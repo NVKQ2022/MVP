@@ -1,8 +1,9 @@
-"""FastAPI Application Factory for ChatbotOCR Server."""
-
+from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from server.config import server_settings
 from server.routes import health_router, ocr_router, rag_router, pipeline_router
@@ -62,6 +63,23 @@ def create_app() -> FastAPI:
     app.include_router(ocr_router)
     app.include_router(rag_router)
     app.include_router(pipeline_router)
+
+    # Static Assets & Web UI Mounting
+    static_dir = Path("server/static")
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+    samples_dir = Path("data/sample_screenshots")
+    if samples_dir.exists():
+        app.mount("/sample-images", StaticFiles(directory=str(samples_dir)), name="sample_images")
+
+    @app.get("/", tags=["UI"], include_in_schema=False)
+    def serve_ui():
+        """Serves the ChatbotOCR Web UI single-page application."""
+        index_file = static_dir / "index.html"
+        if index_file.exists():
+            return FileResponse(index_file)
+        return {"status": "ok", "message": "ChatbotOCR API is running. UI file not found."}
 
     return app
 

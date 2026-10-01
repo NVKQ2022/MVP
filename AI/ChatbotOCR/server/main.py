@@ -16,6 +16,8 @@ logger = get_logger(__name__)
 
 def run_server():
     """Starts the Uvicorn ASGI server."""
+    print(f"\n🌐 Web UI available at: http://localhost:{server_settings.port}")
+    print(f"📖 API Docs available at: http://localhost:{server_settings.port}/docs\n")
     logger.info(
         f"Starting {server_settings.app_name} on http://{server_settings.host}:{server_settings.port}"
     )

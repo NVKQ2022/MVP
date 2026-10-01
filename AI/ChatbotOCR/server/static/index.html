@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SupportBot AI — Screenshot Diagnosis & Knowledge Retrieval</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Marked.js for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .prose pre { background: #0f172a; padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; }
+    .prose code { color: #38bdf8; font-family: monospace; font-size: 0.875rem; }
+    .prose p { margin-bottom: 0.5rem; }
+    .prose ul, .prose ol { margin-left: 1.25rem; margin-bottom: 0.5rem; list-style-type: decimal; }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased overflow-hidden">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-slate-950/80 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between z-20">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-bold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-base font-semibold text-white tracking-tight">SupportBot AI</h1>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Online
+          </span>
+        </div>
+        <p class="text-xs text-slate-400">PaddleOCR Text Extraction &bull; PolyRAG Knowledge Retrieval</p>
+      </div>
+    </div>
+
+    <!-- Status Badges & Actions -->
+    <div class="flex items-center space-x-2 text-xs">
+      <div class="hidden sm:flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-300">
+        <span>📷 OCR: <strong class="text-white">PaddleOCR</strong></span>
+        <span class="text-slate-600">&bull;</span>
+        <span>📚 KB: <strong id="header-kb-chunks" class="text-indigo-400">Loading...</strong> chunks</span>
+      </div>
+      <a href="/docs" target="_blank" class="px-3 py-1.5 rounded-lg border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition">
+        API Docs
+      </a>
+      <button id="btn-clear-chat" title="Clear chat history" class="px-2.5 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Chat Workspace -->
+  <main class="flex-1 flex flex-col min-h-0 relative">
+    
+    <!-- Drag-and-drop Overlay -->
+    <div id="drop-overlay" class="absolute inset-0 bg-indigo-950/80 backdrop-blur-sm border-2 border-dashed border-indigo-400 z-50 flex flex-col items-center justify-center pointer-events-none hidden transition-all">
+      <div class="w-16 h-16 rounded-2xl bg-indigo-600/30 flex items-center justify-center text-indigo-300 mb-3">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+      </div>
+      <p class="text-base font-semibold text-white">Drop Screenshot Here</p>
+      <p class="text-xs text-indigo-200">PNG, JPG, JPEG, WEBP accepted</p>
+    </div>
+
+    <!-- Messages Scrollable Feed -->
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 max-w-4xl mx-auto w-full">
+      
+      <!-- Welcome Message & Quick Samples -->
+      <div class="flex space-x-3">
+        <div class="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+          🤖
+        </div>
+        <div class="flex-1 space-y-3">
+          <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl rounded-tl-sm p-4 text-slate-200 text-sm shadow-sm space-y-2">
+            <p class="font-medium text-white">Welcome! How can I assist you today?</p>
+            <p class="text-slate-300 text-xs leading-relaxed">
+              Upload, paste (<kbd class="px-1.5 py-0.5 bg-slate-900 border border-slate-700 rounded text-slate-300">Ctrl+V</kbd>), or drag & drop any screenshot showing an error or incident.
+              I will extract the text via <strong>PaddleOCR</strong> and find troubleshooting steps in the <strong>Knowledge Base</strong> using <strong>PolyRAG</strong>.
+            </p>
+          </div>
+
+          <!-- Quick Test Samples Section -->
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">⚡ Or test instantly with a sample screenshot:</p>
+            <div id="sample-buttons" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="loadSample('kb-auth-001__01__clean_light.png', 'AUTH-401 Invalid Token')" class="flex items-center space-x-2 text-left p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/50 transition group">
+                <span class="text-lg">🔑</span>
+                <div class="overflow-hidden">
+                  <div class="text-xs font-medium text-slate-200 group-hover:text-indigo-300 truncate">AUTH-401 Token Expired</div>
+                  <div class="text-[11px] text-slate-400 truncate">Clean UI &bull; Authentication</div>
+                </div>
+              </button>
+
+              <button onclick="loadSample('kb-db-003__01__clean_light.png', 'DB-DEADLOCK-001 Deadlock')" class="flex items-center space-x-2 text-left p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/50 transition group">
+                <span class="text-lg">🔒</span>
+                <div class="overflow-hidden">
+                  <div class="text-xs font-medium text-slate-200 group-hover:text-indigo-300 truncate">DB Deadlock Detected</div>
+                  <div class="text-[11px] text-slate-400 truncate">Database &bull; Concurrency</div>
+                </div>
+              </button>
+
+              <button onclick="loadSample('kb-net-001__01__dark_mode.png', 'NET-504 Connection Timeout')" class="flex items-center space-x-2 text-left p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/50 transition group">
+                <span class="text-lg">🌐</span>
+                <div class="overflow-hidden">
+                  <div class="text-xs font-medium text-slate-200 group-hover:text-indigo-300 truncate">Gateway Timeout (504)</div>
+                  <div class="text-[11px] text-slate-400 truncate">Dark Mode &bull; Network</div>
+                </div>
+              </button>
+
+              <button onclick="loadSample('kb-file-001__01__clean_light.png', 'FILE-413 Upload Too Large')" class="flex items-center space-x-2 text-left p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/50 transition group">
+                <span class="text-lg">📁</span>
+                <div class="overflow-hidden">
+                  <div class="text-xs font-medium text-slate-200 group-hover:text-indigo-300 truncate">File Too Large (413)</div>
+                  <div class="text-[11px] text-slate-400 truncate">File Upload &bull; Quota</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Input Workspace -->
+    <div class="border-t border-slate-800 bg-slate-950/90 backdrop-blur p-4">
+      <div class="max-w-4xl mx-auto space-y-3">
+
+        <!-- Attached Image Preview Chip -->
+        <div id="attached-preview-bar" class="hidden flex items-center justify-between p-2 rounded-xl bg-slate-900 border border-slate-800">
+          <div class="flex items-center space-x-3 overflow-hidden">
+            <img id="preview-thumbnail" class="w-12 h-12 object-cover rounded-lg border border-slate-700" src="" alt="Screenshot Preview">
+            <div class="text-xs overflow-hidden">
+              <p id="preview-filename" class="font-medium text-white truncate max-w-xs sm:max-w-md">screenshot.png</p>
+              <p id="preview-filesize" class="text-slate-400">0 KB</p>
+            </div>
+          </div>
+          <button id="btn-remove-attachment" class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition" title="Remove attachment">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Input Form -->
+        <form id="chat-form" class="flex flex-col sm:flex-row items-stretch sm:items-end gap-2" onsubmit="event.preventDefault(); handleSubmit();">
+          
+          <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp" class="hidden">
+
+          <!-- Strategy & Top-K Controls -->
+          <div class="flex items-center space-x-2 shrink-0">
+            <button type="button" id="btn-attach" title="Attach screenshot image" class="p-2.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-800 hover:border-slate-600 text-slate-300 transition flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+              </svg>
+            </button>
+
+            <select id="pipeline-select" title="PolyRAG Query Strategy" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl px-2.5 py-2.5 focus:outline-none focus:border-indigo-500">
+              <option value="naive" selected>Standard (Naive RAG)</option>
+              <option value="advanced">Advanced (Multi-Query)</option>
+              <option value="agentic">Agentic (Reflective)</option>
+            </select>
+          </div>
+
+          <!-- Text Input Area -->
+          <div class="flex-1 relative">
+            <textarea 
+              id="message-input" 
+              rows="1" 
+              placeholder="Ask a question or add details about the screenshot (or press Enter to send)..." 
+              class="w-full bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500 resize-none max-h-32 transition"
+            ></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <button 
+            type="submit" 
+            id="btn-send"
+            class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium text-sm flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/20 transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            <span id="btn-send-text">Send</span>
+            <svg id="btn-send-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+            </svg>
+            <svg id="btn-send-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+          </button>
+        </form>
+
+        <div class="flex items-center justify-between text-[11px] text-slate-500 px-1">
+          <span>💡 Tip: Press <kbd class="text-slate-400">Ctrl+V</kbd> anywhere to paste screenshot from clipboard.</span>
+          <span>Shift+Enter for newline</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Image Modal / Lightbox -->
+  <div id="image-modal" class="fixed inset-0 bg-black/90 backdrop-blur z-50 flex items-center justify-center p-4 hidden" onclick="closeImageModal()">
+    <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
+      <img id="modal-image" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl border border-slate-700" src="" alt="Enlarged screenshot">
+      <button class="absolute -top-10 right-0 text-slate-300 hover:text-white p-2">✕ Close</button>
+    </div>
+  </div>
+
+  <!-- Client-Side JavaScript Logic -->
+  <script>
+    let currentAttachment = null; // { file: File, base64: string }
+    let isProcessing = false;
+
+    // Elements
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const fileInput = document.getElementById('file-input');
+    const btnAttach = document.getElementById('btn-attach');
+    const btnSend = document.getElementById('btn-send');
+    const btnSendText = document.getElementById('btn-send-text');
+    const btnSendIcon = document.getElementById('btn-send-icon');
+    const btnSendSpinner = document.getElementById('btn-send-spinner');
+    const attachedPreviewBar = document.getElementById('attached-preview-bar');
+    const previewThumbnail = document.getElementById('preview-thumbnail');
+    const previewFilename = document.getElementById('preview-filename');
+    const previewFilesize = document.getElementById('preview-filesize');
+    const btnRemoveAttachment = document.getElementById('btn-remove-attachment');
+    const pipelineSelect = document.getElementById('pipeline-select');
+    const dropOverlay = document.getElementById('drop-overlay');
+    const btnClearChat = document.getElementById('btn-clear-chat');
+    const headerKbChunks = document.getElementById('header-kb-chunks');
+
+    // Load initial system stats
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/v1/rag/status');
+        if (res.ok) {
+          const data = await res.json();
+          headerKbChunks.innerText = data.indexed_chunks;
+        }
+      } catch (e) {
+        headerKbChunks.innerText = '12';
+      }
+    }
+    loadStats();
+
+    // Auto-grow textarea
+    messageInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Enter to submit (Shift+Enter for newline)
+    messageInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    });
+
+    // File Attach Button
+    btnAttach.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', function(e) {
+      if (this.files && this.files[0]) {
+        handleFileSelect(this.files[0]);
+      }
+    });
+
+    // Remove Attachment
+    btnRemoveAttachment.addEventListener('click', () => {
+      currentAttachment = null;
+      fileInput.value = '';
+      attachedPreviewBar.classList.add('hidden');
+    });
+
+    // Clear Chat
+    btnClearChat.addEventListener('click', () => {
+      if (confirm('Clear chat conversation?')) {
+        window.location.reload();
+      }
+    });
+
+    // File handling
+    function handleFileSelect(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please attach an image file (PNG, JPG, WEBP).');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        currentAttachment = {
+          file: file,
+          base64: e.target.result,
+        };
+        previewThumbnail.src = currentAttachment.base64;
+        previewFilename.innerText = file.name;
+        previewFilesize.innerText = (file.size / 1024).toFixed(1) + ' KB';
+        attachedPreviewBar.classList.remove('hidden');
+        messageInput.focus();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Clipboard Paste Listener (Ctrl+V)
+    window.addEventListener('paste', (e) => {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (const item of items) {
+        if (item.type.indexOf('image') === 0) {
+          const blob = item.getAsFile();
+          handleFileSelect(blob);
+          e.preventDefault();
+          break;
+        }
+      }
+    });
+
+    // Drag and Drop Listeners
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropOverlay.classList.remove('hidden');
+    });
+    window.addEventListener('dragleave', (e) => {
+      if (e.relatedTarget === null) {
+        dropOverlay.classList.add('hidden');
+      }
+    });
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropOverlay.classList.add('hidden');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFileSelect(e.dataTransfer.files[0]);
+      }
+    });
+
+    // Quick Sample Loader
+    async function loadSample(filename, title) {
+      try {
+        setLoading(true);
+        const res = await fetch(`/sample-images/${filename}`);
+        if (!res.ok) throw new Error('Sample image not found on server.');
+        const blob = await res.blob();
+        const file = new File([blob], filename, { type: blob.type || 'image/png' });
+        handleFileSelect(file);
+        messageInput.value = `Diagnose issue: ${title}`;
+      } catch (err) {
+        alert(`Failed to load sample: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // Submit handler
+    async function handleSubmit() {
+      if (isProcessing) return;
+      const text = messageInput.value.trim();
+      if (!currentAttachment && !text) {
+        messageInput.focus();
+        return;
+      }
+
+      const activeImage = currentAttachment;
+      const activeText = text;
+      const pipeline = pipelineSelect.value;
+
+      // Render User Message in Chat
+      appendUserMessage(activeText, activeImage ? activeImage.base64 : null);
+
+      // Clear input & attachment
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+      currentAttachment = null;
+      fileInput.value = '';
+      attachedPreviewBar.classList.add('hidden');
+
+      setLoading(true);
+      const loadingBubble = appendLoadingMessage();
+
+      try {
+        let responseData;
+
+        if (activeImage && activeImage.file) {
+          // Send as Multipart Form
+          const formData = new FormData();
+          formData.append('file', activeImage.file);
+          if (activeText) formData.append('message', activeText);
+          formData.append('pipeline', pipeline);
+          formData.append('top_k', '2');
+
+          const res = await fetch('/api/v1/pipeline/diagnose', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({ detail: res.statusText }));
+            throw new Error(errData.detail || 'Diagnosis failed');
+          }
+          responseData = await res.json();
+        } else {
+          // Send as JSON message (follow-up text query)
+          const res = await fetch('/api/v1/pipeline/diagnose-json', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: activeText,
+              pipeline: pipeline,
+              top_k: 2,
+            }),
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({ detail: res.statusText }));
+            throw new Error(errData.detail || 'Follow-up query failed');
+          }
+          responseData = await res.json();
+        }
+
+        // Replace loading message with bot answer
+        loadingBubble.remove();
+        appendBotMessage(responseData);
+
+      } catch (err) {
+        loadingBubble.remove();
+        appendErrorMessage(err.message);
+      } finally {
+        setLoading(false);
+        scrollToBottom();
+      }
+    }
+
+    // Set UI loading state
+    function setLoading(loading) {
+      isProcessing = loading;
+      btnSend.disabled = loading;
+      if (loading) {
+        btnSendText.innerText = 'Analyzing...';
+        btnSendIcon.classList.add('hidden');
+        btnSendSpinner.classList.remove('hidden');
+      } else {
+        btnSendText.innerText = 'Send';
+        btnSendIcon.classList.remove('hidden');
+        btnSendSpinner.classList.add('hidden');
+      }
+    }
+
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Render User Message
+    function appendUserMessage(text, imageBase64) {
+      const div = document.createElement('div');
+      div.className = 'flex flex-row-reverse space-x-reverse space-x-3';
+      
+      let imageHtml = '';
+      if (imageBase64) {
+        imageHtml = `
+          <div class="mb-2">
+            <img src="${imageBase64}" onclick="openImageModal('${imageBase64}')" class="max-h-56 rounded-xl border border-indigo-400/30 object-cover cursor-pointer hover:opacity-90 transition shadow-md" alt="Uploaded Screenshot">
+          </div>
+        `;
+      }
+
+      let textHtml = text ? `<p class="whitespace-pre-wrap leading-relaxed">${escapeHtml(text)}</p>` : '';
+
+      div.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 text-xs font-semibold">
+          You
+        </div>
+        <div class="max-w-xl bg-indigo-600/30 border border-indigo-500/40 rounded-2xl rounded-tr-sm p-4 text-slate-100 text-sm shadow-sm">
+          ${imageHtml}
+          ${textHtml}
+        </div>
+      `;
+      chatMessages.appendChild(div);
+      scrollToBottom();
+    }
+
+    // Render Loading Bubble
+    function appendLoadingMessage() {
+      const div = document.createElement('div');
+      div.className = 'flex space-x-3';
+      div.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0 animate-pulse">
+          ⚙️
+        </div>
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl rounded-tl-sm p-4 text-slate-300 text-sm flex items-center space-x-3">
+          <div class="flex space-x-1.5">
+            <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+            <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+            <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+          </div>
+          <span class="text-xs text-slate-400">Extracting text & searching knowledge base...</span>
+        </div>
+      `;
+      chatMessages.appendChild(div);
+      scrollToBottom();
+      return div;
+    }
+
+    // Render Bot Message
+    function appendBotMessage(data) {
+      const div = document.createElement('div');
+      div.className = 'flex space-x-3';
+
+      const markdownAnswer = marked.parse(data.answer || 'No solution details generated.');
+
+      // Build OCR Accordion if text exists
+      let ocrAccordion = '';
+      if (data.ocr_text && data.ocr_text.trim()) {
+        ocrAccordion = `
+          <details class="mt-3 group border border-slate-700/80 rounded-xl overflow-hidden bg-slate-900/60">
+            <summary class="px-3 py-2 text-xs font-medium text-slate-300 hover:text-white cursor-pointer select-none flex items-center justify-between">
+              <span class="flex items-center space-x-1.5">
+                <span>🔍 Extracted OCR Text</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">${data.ocr_text.split('\\n').length} lines</span>
+              </span>
+              <span class="text-slate-500 group-open:rotate-180 transition-transform text-xs">▼</span>
+            </summary>
+            <div class="p-3 border-t border-slate-800 bg-slate-950 font-mono text-[11px] text-sky-300 whitespace-pre-wrap max-h-48 overflow-y-auto">${escapeHtml(data.ocr_text)}</div>
+          </details>
+        `;
+      }
+
+      // Build Sources Badges
+      let sourcesHtml = '';
+      if (data.sources && data.sources.length > 0) {
+        sourcesHtml = `
+          <div class="mt-3 pt-3 border-t border-slate-700/60 flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] text-slate-400 font-medium">📚 Sources:</span>
+            ${data.sources.map(s => `
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] bg-indigo-950/60 text-indigo-300 border border-indigo-700/50">
+                ${s.id || s.source}
+              </span>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      div.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0 text-sm">
+          🤖
+        </div>
+        <div class="max-w-2xl bg-slate-800/90 border border-slate-700/70 rounded-2xl rounded-tl-sm p-4 text-slate-200 text-sm shadow-md">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mb-2 pb-2 border-b border-slate-700/50">
+            <span class="font-medium text-indigo-400 uppercase tracking-wider text-[10px]">${data.pipeline_used || 'Standard'} Pipeline</span>
+            <span>⚡ ${data.took_ms || 0} ms</span>
+          </div>
+
+          <div class="prose prose-invert prose-sm max-w-none text-slate-200 leading-relaxed">
+            ${markdownAnswer}
+          </div>
+
+          ${ocrAccordion}
+          ${sourcesHtml}
+        </div>
+      `;
+      chatMessages.appendChild(div);
+      scrollToBottom();
+    }
+
+    // Render Error Message
+    function appendErrorMessage(errText) {
+      const div = document.createElement('div');
+      div.className = 'flex space-x-3';
+      div.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0 text-xs">
+          ⚠️
+        </div>
+        <div class="max-w-xl bg-rose-950/40 border border-rose-800/60 rounded-2xl rounded-tl-sm p-3.5 text-rose-200 text-sm">
+          <p class="font-semibold text-xs text-rose-300 mb-1">Processing Failed</p>
+          <p class="text-xs leading-relaxed">${escapeHtml(errText)}</p>
+        </div>
+      `;
+      chatMessages.appendChild(div);
+      scrollToBottom();
+    }
+
+    // Image Modal
+    function openImageModal(src) {
+      document.getElementById('modal-image').src = src;
+      document.getElementById('image-modal').classList.remove('hidden');
+    }
+    function closeImageModal() {
+      document.getElementById('image-modal').classList.add('hidden');
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

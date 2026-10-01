@@ -1,6 +1,8 @@
 """End-to-End Pipeline Routes: OCR Screenshot Extraction -> PolyRAG Knowledge Retrieval -> Support Answer."""
 
+import json
 import time
+from pathlib import Path
 from typing import Any, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
@@ -132,32 +134,58 @@ async def diagnose_uploaded_screenshot(
         )
 
 
+@pipeline_router.get("/samples")
+def get_sample_screenshots() -> list[dict[str, Any]]:
+    """Returns available sample screenshots for rapid UI testing."""
+    manifest_path = Path("data/sample_screenshots/manifest.json")
+    if not manifest_path.exists():
+        return []
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        samples = []
+        for item in data:
+            samples.append({
+                "file": item.get("file"),
+                "article_id": item.get("article_id"),
+                "variant": item.get("variant"),
+                "title": item.get("expected_title"),
+                "difficulty": item.get("expected_difficulty"),
+                "error_codes": item.get("error_codes", []),
+            })
+        return samples
+    except Exception:
+        return []
+
+
 @pipeline_router.post("/diagnose-json", response_model=PipelineDiagnosisResponse)
 def diagnose_json_screenshot(
     request: PipelineJsonRequest,
     ocr_orchestrator: OCROrchestratorService = Depends(get_ocr_orchestrator),
     rag_engine: RAGEngine = Depends(get_rag_engine),
 ) -> PipelineDiagnosisResponse:
-    """Direct Screenshot-to-RAG Pipeline on Base64 string or remote image URL."""
+    """Direct Screenshot-to-RAG Pipeline on Base64 string, image URL, or conversational text."""
     start_time = time.time()
     try:
         payload = request.image_url if request.image_url else request.image_base64
-        if not payload:
+        extracted_text = ""
+
+        if payload:
+            # Step 1: Direct OCR Extraction
+            ocr_result = ocr_orchestrator.process_image(
+                payload=payload,
+                is_url=bool(request.image_url),
+                min_confidence=0.4,
+                sort_reading_order=True,
+            )
+            extracted_text = ocr_result.full_text
+        elif not (request.message and request.message.strip()):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Either 'image_base64' or 'image_url' must be provided.",
+                detail="Either an image ('image_base64' / 'image_url') or a text 'message' must be provided.",
             )
 
-        # Step 1: Direct OCR Extraction
-        ocr_result = ocr_orchestrator.process_image(
-            payload=payload,
-            is_url=bool(request.image_url),
-            min_confidence=0.4,
-            sort_reading_order=True,
-        )
-
-        # Step 2: Feed OCR text directly into PolyRAG
-        rag_prompt = _build_rag_prompt(ocr_result.full_text, request.message)
+        # Step 2: Feed OCR text / query into PolyRAG
+        rag_prompt = _build_rag_prompt(extracted_text, request.message)
         answer, sources, confidence = _execute_rag(
             rag_engine=rag_engine,
             prompt=rag_prompt,
@@ -169,7 +197,7 @@ def diagnose_json_screenshot(
 
         return PipelineDiagnosisResponse(
             answer=answer,
-            ocr_text=ocr_result.full_text,
+            ocr_text=extracted_text,
             sources=sources,
             pipeline_used=request.pipeline,
             took_ms=total_ms,
