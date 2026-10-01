@@ -124,10 +124,11 @@ class MiniFASNetAntiSpoofingService(BaseAntiSpoofingService):
         if is_real:
             label = "Real"
             attack_type = None
+            print(f"Real confidence: {real_confidence:.4f}, threshold: {self.threshold:.4f}")
         else:
             label = "Spoof"
             attack_type = "print" if probs[0] > probs[2] else "replay"
-
+            print(f"Spoof confidence: {1 - real_confidence:.4f}, threshold: {self.threshold:.4f}, attack type: {attack_type}")
         return LivenessDTO(
             is_real=is_real,
             confidence=round(real_confidence, 4),
