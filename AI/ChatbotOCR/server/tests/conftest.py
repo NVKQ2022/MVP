@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from server.app import app
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def test_client():
     """Provides a TestClient connected to the FastAPI application."""
     with TestClient(app) as client:

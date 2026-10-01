@@ -3,20 +3,13 @@
 import base64
 from pathlib import Path
 import pytest
-from fastapi.testclient import TestClient
-
-from server.app import create_app
-
-client = TestClient(create_app())
-
-
-def test_pipeline_diagnose_multipart_endpoint():
+def test_pipeline_diagnose_multipart_endpoint(test_client):
     """Test POST /api/v1/pipeline/diagnose with actual sample screenshot."""
     img_path = Path("data/sample_screenshots/kb-auth-001__01__clean_light.png")
     assert img_path.exists(), f"Sample image not found: {img_path}"
 
     with open(img_path, "rb") as f:
-        response = client.post(
+        response = test_client.post(
             "/api/v1/pipeline/diagnose",
             files={"file": ("screenshot.png", f, "image/png")},
             data={"pipeline": "naive", "top_k": 2},
@@ -36,7 +29,7 @@ def test_pipeline_diagnose_multipart_endpoint():
     assert "KB-AUTH-001" in str(data["sources"])
 
 
-def test_pipeline_diagnose_json_endpoint():
+def test_pipeline_diagnose_json_endpoint(test_client):
     """Test POST /api/v1/pipeline/diagnose-json with Base64 image payload."""
     img_path = Path("data/sample_screenshots/kb-auth-001__01__clean_light.png")
     assert img_path.exists()
@@ -50,7 +43,7 @@ def test_pipeline_diagnose_json_endpoint():
         "top_k": 2,
     }
 
-    response = client.post("/api/v1/pipeline/diagnose-json", json=payload)
+    response = test_client.post("/api/v1/pipeline/diagnose-json", json=payload)
     assert response.status_code == 200
     data = response.json()
 

@@ -20,7 +20,8 @@ def test_rag_status_endpoint(test_client):
     response = test_client.get("/api/v1/rag/status")
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "initialized"
+    assert data["status"] in ("ready", "initialized")
+    assert "indexed_chunks" in data
 
 
 def test_ocr_info_endpoint(test_client):
