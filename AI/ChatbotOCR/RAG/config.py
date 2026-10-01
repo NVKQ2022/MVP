@@ -41,10 +41,7 @@ class RAGSettings(BaseModel):
         default_factory=lambda: os.getenv("CHROMA_COLLECTION_NAME", "support_kb")
     )
 
-    # KB Data paths
-    kb_json_path: str = Field(
-        default_factory=lambda: os.getenv("KB_JSON_PATH", str(ROOT_DIR / "data" / "knowledge_base.json"))
-    )
+    # Knowledge Base Documents directory (sole source of truth)
     kb_docs_dir: str = Field(
         default_factory=lambda: os.getenv("KB_DOCS_DIR", str(ROOT_DIR / "data" / "kb_documents"))
     )

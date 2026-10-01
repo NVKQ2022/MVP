@@ -41,7 +41,7 @@ def main() -> None:
     parser.add_argument(
         "--ingest",
         action="store_true",
-        help="Force re-generation and indexing of knowledge base documents.",
+        help="Re-index all documents from data/kb_documents/ into vector store.",
     )
     parser.add_argument(
         "-v", "--verbose",
@@ -56,7 +56,7 @@ def main() -> None:
 
     if args.ingest or engine.vector_store.count() == 0:
         print("📥 Ingesting knowledge documents into ChromaDB...")
-        count = engine.ingest_kb_documents(force_regenerate=args.ingest)
+        count = engine.ingest_kb_documents()
         print(f"✅ Ingested {count} chunks. Total indexed: {engine.vector_store.count()}\n")
 
     def run_query(question: str) -> None:

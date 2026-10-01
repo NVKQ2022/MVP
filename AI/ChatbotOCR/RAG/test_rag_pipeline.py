@@ -11,19 +11,16 @@ sys.path.insert(0, str(ROOT_DIR))
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-7s | %(message)s")
 logger = logging.getLogger("RAGTest")
 
-from RAG.services.document_generator import generate_kb_text_files
 from RAG.services.rag_engine import RAGEngine
 
 
 def run_full_pipeline_verification():
     print("=" * 70)
-    print("🚀 STEP 1: GENERATE TEXT FILES FROM knowledge_base.json")
+    print("📁 STEP 1: VERIFY KNOWLEDGE BASE DOCUMENTS IN data/kb_documents/")
     print("=" * 70)
-    files = generate_kb_text_files(
-        json_path="data/knowledge_base.json",
-        output_dir="data/kb_documents",
-    )
-    print(f"Generated {len(files)} text documents:")
+    kb_dir = Path("data/kb_documents")
+    files = sorted(list(kb_dir.glob("*.txt")) + list(kb_dir.glob("*.md")))
+    print(f"Found {len(files)} knowledge base documents:")
     for f in files[:4]:
         print(f"  • {f.name} ({f.stat().st_size} bytes)")
     print(f"  ... and {len(files) - 4} more.")

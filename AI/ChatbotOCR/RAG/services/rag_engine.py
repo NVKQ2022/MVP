@@ -17,7 +17,6 @@ from polyrag.core.interfaces import BaseVectorStore, BaseLLMClient
 from polyrag.core.models import AgentResponse
 
 from RAG.config import rag_settings
-from RAG.services.document_generator import generate_kb_text_files
 
 logger = logging.getLogger(__name__)
 
@@ -103,20 +102,19 @@ class RAGEngine:
         force_regenerate: bool = False,
     ) -> int:
         """
-        Ingest all generated .txt files from the KB documents directory into PolyRAG.
-        If files do not exist or force_regenerate is True, generates them from knowledge_base.json first.
+        Ingest all support text/markdown documents from the KB documents directory into PolyRAG.
+        Scans *.txt and *.md files directly as the primary knowledge base.
         """
         target_dir = Path(docs_dir or rag_settings.kb_docs_dir)
 
-        if force_regenerate or not target_dir.exists() or not list(target_dir.glob("*.txt")):
-            logger.info(f"Generating KB text files into {target_dir}...")
-            generate_kb_text_files(
-                json_path=rag_settings.kb_json_path,
-                output_dir=target_dir,
-            )
+        if not target_dir.exists():
+            raise FileNotFoundError(f"Knowledge base documents directory not found: {target_dir}")
 
-        txt_files = sorted(target_dir.glob("*.txt"))
-        logger.info(f"Found {len(txt_files)} text files in {target_dir}. Ingesting into vector store...")
+        txt_files = sorted(list(target_dir.glob("*.txt")) + list(target_dir.glob("*.md")))
+        if not txt_files:
+            raise FileNotFoundError(f"No .txt or .md knowledge documents found in {target_dir}")
+
+        logger.info(f"Found {len(txt_files)} knowledge base documents in {target_dir}. Ingesting into PolyRAG vector store...")
 
         total_chunks = 0
         for f in txt_files:
