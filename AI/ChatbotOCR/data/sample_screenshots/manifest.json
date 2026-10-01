@@ -1,0 +1,717 @@
+[
+  {
+    "file": "kb-auth-001__01__clean_light.png",
+    "article_id": "KB-AUTH-001",
+    "variant": "clean_light",
+    "error_codes": [
+      "AUTH-401",
+      "HTTP 401"
+    ],
+    "expected_title": "Invalid or expired authentication token",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-auth-001__02__blurred_strong.png",
+    "article_id": "KB-AUTH-001",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "AUTH-401",
+      "HTTP 401"
+    ],
+    "expected_title": "Invalid or expired authentication token",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-auth-001__03__no_error_code.png",
+    "article_id": "KB-AUTH-001",
+    "variant": "no_error_code",
+    "error_codes": [
+      "AUTH-401",
+      "HTTP 401"
+    ],
+    "expected_title": "Invalid or expired authentication token",
+    "contains_error_code": false,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-auth-001__04__dark_mode.png",
+    "article_id": "KB-AUTH-001",
+    "variant": "dark_mode",
+    "error_codes": [
+      "AUTH-401",
+      "HTTP 401"
+    ],
+    "expected_title": "Invalid or expired authentication token",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-auth-001__05__noisy.png",
+    "article_id": "KB-AUTH-001",
+    "variant": "noisy",
+    "error_codes": [
+      "AUTH-401",
+      "HTTP 401"
+    ],
+    "expected_title": "Invalid or expired authentication token",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-auth-002__01__dark_mode.png",
+    "article_id": "KB-AUTH-002",
+    "variant": "dark_mode",
+    "error_codes": [
+      "AUTH-403",
+      "ACCOUNT-LOCKED",
+      "HTTP 403"
+    ],
+    "expected_title": "Customer account is locked",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-auth-002__02__blurred_strong.png",
+    "article_id": "KB-AUTH-002",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "AUTH-403",
+      "ACCOUNT-LOCKED",
+      "HTTP 403"
+    ],
+    "expected_title": "Customer account is locked",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-auth-002__03__busy_ui.png",
+    "article_id": "KB-AUTH-002",
+    "variant": "busy_ui",
+    "error_codes": [
+      "AUTH-403",
+      "ACCOUNT-LOCKED",
+      "HTTP 403"
+    ],
+    "expected_title": "Customer account is locked",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-auth-002__04__no_error_code.png",
+    "article_id": "KB-AUTH-002",
+    "variant": "no_error_code",
+    "error_codes": [
+      "AUTH-403",
+      "ACCOUNT-LOCKED",
+      "HTTP 403"
+    ],
+    "expected_title": "Customer account is locked",
+    "contains_error_code": false,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-auth-002__05__small_low_quality.png",
+    "article_id": "KB-AUTH-002",
+    "variant": "small_low_quality",
+    "error_codes": [
+      "AUTH-403",
+      "ACCOUNT-LOCKED",
+      "HTTP 403"
+    ],
+    "expected_title": "Customer account is locked",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-auth-003__01__clean_light.png",
+    "article_id": "KB-AUTH-003",
+    "variant": "clean_light",
+    "error_codes": [
+      "EMAIL-VERIFY-001"
+    ],
+    "expected_title": "Email address has not been verified",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-auth-003__02__blurred_strong.png",
+    "article_id": "KB-AUTH-003",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "EMAIL-VERIFY-001"
+    ],
+    "expected_title": "Email address has not been verified",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-auth-003__03__busy_ui.png",
+    "article_id": "KB-AUTH-003",
+    "variant": "busy_ui",
+    "error_codes": [
+      "EMAIL-VERIFY-001"
+    ],
+    "expected_title": "Email address has not been verified",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-auth-003__04__blurred_light.png",
+    "article_id": "KB-AUTH-003",
+    "variant": "blurred_light",
+    "error_codes": [
+      "EMAIL-VERIFY-001"
+    ],
+    "expected_title": "Email address has not been verified",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-auth-003__05__small_low_quality.png",
+    "article_id": "KB-AUTH-003",
+    "variant": "small_low_quality",
+    "error_codes": [
+      "EMAIL-VERIFY-001"
+    ],
+    "expected_title": "Email address has not been verified",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-net-001__01__dark_mode.png",
+    "article_id": "KB-NET-001",
+    "variant": "dark_mode",
+    "error_codes": [
+      "TIMEOUT",
+      "HTTP 504"
+    ],
+    "expected_title": "Connection timed out",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-net-001__02__blurred_strong.png",
+    "article_id": "KB-NET-001",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "TIMEOUT",
+      "HTTP 504"
+    ],
+    "expected_title": "Connection timed out",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-net-001__03__no_error_code.png",
+    "article_id": "KB-NET-001",
+    "variant": "no_error_code",
+    "error_codes": [
+      "TIMEOUT",
+      "HTTP 504"
+    ],
+    "expected_title": "Connection timed out",
+    "contains_error_code": false,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-net-001__04__noisy.png",
+    "article_id": "KB-NET-001",
+    "variant": "noisy",
+    "error_codes": [
+      "TIMEOUT",
+      "HTTP 504"
+    ],
+    "expected_title": "Connection timed out",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-net-001__05__cropped.png",
+    "article_id": "KB-NET-001",
+    "variant": "cropped",
+    "error_codes": [
+      "TIMEOUT",
+      "HTTP 504"
+    ],
+    "expected_title": "Connection timed out",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-net-002__01__clean_light.png",
+    "article_id": "KB-NET-002",
+    "variant": "clean_light",
+    "error_codes": [
+      "HTTP 503",
+      "SERVICE-503"
+    ],
+    "expected_title": "Service temporarily unavailable",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-net-002__02__blurred_strong.png",
+    "article_id": "KB-NET-002",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "HTTP 503",
+      "SERVICE-503"
+    ],
+    "expected_title": "Service temporarily unavailable",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-net-002__03__busy_ui.png",
+    "article_id": "KB-NET-002",
+    "variant": "busy_ui",
+    "error_codes": [
+      "HTTP 503",
+      "SERVICE-503"
+    ],
+    "expected_title": "Service temporarily unavailable",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-net-002__04__dark_mode.png",
+    "article_id": "KB-NET-002",
+    "variant": "dark_mode",
+    "error_codes": [
+      "HTTP 503",
+      "SERVICE-503"
+    ],
+    "expected_title": "Service temporarily unavailable",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-net-002__05__small_low_quality.png",
+    "article_id": "KB-NET-002",
+    "variant": "small_low_quality",
+    "error_codes": [
+      "HTTP 503",
+      "SERVICE-503"
+    ],
+    "expected_title": "Service temporarily unavailable",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-net-003__01__dark_mode.png",
+    "article_id": "KB-NET-003",
+    "variant": "dark_mode",
+    "error_codes": [
+      "DNS-001"
+    ],
+    "expected_title": "DNS resolution failed",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-net-003__02__blurred_strong.png",
+    "article_id": "KB-NET-003",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "DNS-001"
+    ],
+    "expected_title": "DNS resolution failed",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-net-003__03__busy_ui.png",
+    "article_id": "KB-NET-003",
+    "variant": "busy_ui",
+    "error_codes": [
+      "DNS-001"
+    ],
+    "expected_title": "DNS resolution failed",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-net-003__04__no_error_code.png",
+    "article_id": "KB-NET-003",
+    "variant": "no_error_code",
+    "error_codes": [
+      "DNS-001"
+    ],
+    "expected_title": "DNS resolution failed",
+    "contains_error_code": false,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-net-003__05__cropped.png",
+    "article_id": "KB-NET-003",
+    "variant": "cropped",
+    "error_codes": [
+      "DNS-001"
+    ],
+    "expected_title": "DNS resolution failed",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-db-001__01__clean_light.png",
+    "article_id": "KB-DB-001",
+    "variant": "clean_light",
+    "error_codes": [
+      "DB-409",
+      "HTTP 409",
+      "SQLSTATE[23000]"
+    ],
+    "expected_title": "Duplicate key violation",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-db-001__02__blurred_strong.png",
+    "article_id": "KB-DB-001",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "DB-409",
+      "HTTP 409",
+      "SQLSTATE[23000]"
+    ],
+    "expected_title": "Duplicate key violation",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-db-001__03__no_error_code.png",
+    "article_id": "KB-DB-001",
+    "variant": "no_error_code",
+    "error_codes": [
+      "DB-409",
+      "HTTP 409",
+      "SQLSTATE[23000]"
+    ],
+    "expected_title": "Duplicate key violation",
+    "contains_error_code": false,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-db-001__04__busy_ui.png",
+    "article_id": "KB-DB-001",
+    "variant": "busy_ui",
+    "error_codes": [
+      "DB-409",
+      "HTTP 409",
+      "SQLSTATE[23000]"
+    ],
+    "expected_title": "Duplicate key violation",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-db-001__05__cropped.png",
+    "article_id": "KB-DB-001",
+    "variant": "cropped",
+    "error_codes": [
+      "DB-409",
+      "HTTP 409",
+      "SQLSTATE[23000]"
+    ],
+    "expected_title": "Duplicate key violation",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-db-002__01__dark_mode.png",
+    "article_id": "KB-DB-002",
+    "variant": "dark_mode",
+    "error_codes": [
+      "DB-CONN-001",
+      "HTTP 500"
+    ],
+    "expected_title": "Database connection failed",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-db-002__02__blurred_strong.png",
+    "article_id": "KB-DB-002",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "DB-CONN-001",
+      "HTTP 500"
+    ],
+    "expected_title": "Database connection failed",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-db-002__03__busy_ui.png",
+    "article_id": "KB-DB-002",
+    "variant": "busy_ui",
+    "error_codes": [
+      "DB-CONN-001",
+      "HTTP 500"
+    ],
+    "expected_title": "Database connection failed",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-db-002__04__clean_light.png",
+    "article_id": "KB-DB-002",
+    "variant": "clean_light",
+    "error_codes": [
+      "DB-CONN-001",
+      "HTTP 500"
+    ],
+    "expected_title": "Database connection failed",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-db-002__05__no_error_code.png",
+    "article_id": "KB-DB-002",
+    "variant": "no_error_code",
+    "error_codes": [
+      "DB-CONN-001",
+      "HTTP 500"
+    ],
+    "expected_title": "Database connection failed",
+    "contains_error_code": false,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-db-003__01__clean_light.png",
+    "article_id": "KB-DB-003",
+    "variant": "clean_light",
+    "error_codes": [
+      "DB-DEADLOCK-001"
+    ],
+    "expected_title": "Database deadlock detected",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-db-003__02__blurred_strong.png",
+    "article_id": "KB-DB-003",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "DB-DEADLOCK-001"
+    ],
+    "expected_title": "Database deadlock detected",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-db-003__03__busy_ui.png",
+    "article_id": "KB-DB-003",
+    "variant": "busy_ui",
+    "error_codes": [
+      "DB-DEADLOCK-001"
+    ],
+    "expected_title": "Database deadlock detected",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-db-003__04__cropped.png",
+    "article_id": "KB-DB-003",
+    "variant": "cropped",
+    "error_codes": [
+      "DB-DEADLOCK-001"
+    ],
+    "expected_title": "Database deadlock detected",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-db-003__05__noisy.png",
+    "article_id": "KB-DB-003",
+    "variant": "noisy",
+    "error_codes": [
+      "DB-DEADLOCK-001"
+    ],
+    "expected_title": "Database deadlock detected",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-file-001__01__dark_mode.png",
+    "article_id": "KB-FILE-001",
+    "variant": "dark_mode",
+    "error_codes": [
+      "FILE-413",
+      "HTTP 413"
+    ],
+    "expected_title": "Uploaded file is too large",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-file-001__02__blurred_strong.png",
+    "article_id": "KB-FILE-001",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "FILE-413",
+      "HTTP 413"
+    ],
+    "expected_title": "Uploaded file is too large",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-file-001__03__no_error_code.png",
+    "article_id": "KB-FILE-001",
+    "variant": "no_error_code",
+    "error_codes": [
+      "FILE-413",
+      "HTTP 413"
+    ],
+    "expected_title": "Uploaded file is too large",
+    "contains_error_code": false,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-file-001__04__blurred_extreme.png",
+    "article_id": "KB-FILE-001",
+    "variant": "blurred_extreme",
+    "error_codes": [
+      "FILE-413",
+      "HTTP 413"
+    ],
+    "expected_title": "Uploaded file is too large",
+    "contains_error_code": true,
+    "expected_difficulty": "extreme"
+  },
+  {
+    "file": "kb-file-001__05__small_low_quality.png",
+    "article_id": "KB-FILE-001",
+    "variant": "small_low_quality",
+    "error_codes": [
+      "FILE-413",
+      "HTTP 413"
+    ],
+    "expected_title": "Uploaded file is too large",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-file-002__01__clean_light.png",
+    "article_id": "KB-FILE-002",
+    "variant": "clean_light",
+    "error_codes": [
+      "FILE-415",
+      "HTTP 415"
+    ],
+    "expected_title": "Unsupported file type",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-file-002__02__blurred_strong.png",
+    "article_id": "KB-FILE-002",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "FILE-415",
+      "HTTP 415"
+    ],
+    "expected_title": "Unsupported file type",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-file-002__03__busy_ui.png",
+    "article_id": "KB-FILE-002",
+    "variant": "busy_ui",
+    "error_codes": [
+      "FILE-415",
+      "HTTP 415"
+    ],
+    "expected_title": "Unsupported file type",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-file-002__04__noisy.png",
+    "article_id": "KB-FILE-002",
+    "variant": "noisy",
+    "error_codes": [
+      "FILE-415",
+      "HTTP 415"
+    ],
+    "expected_title": "Unsupported file type",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-file-002__05__blurred_extreme.png",
+    "article_id": "KB-FILE-002",
+    "variant": "blurred_extreme",
+    "error_codes": [
+      "FILE-415",
+      "HTTP 415"
+    ],
+    "expected_title": "Unsupported file type",
+    "contains_error_code": true,
+    "expected_difficulty": "extreme"
+  },
+  {
+    "file": "kb-gen-001__01__dark_mode.png",
+    "article_id": "KB-GEN-001",
+    "variant": "dark_mode",
+    "error_codes": [
+      "HTTP 404",
+      "RESOURCE-404"
+    ],
+    "expected_title": "Resource not found",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  },
+  {
+    "file": "kb-gen-001__02__blurred_strong.png",
+    "article_id": "KB-GEN-001",
+    "variant": "blurred_strong",
+    "error_codes": [
+      "HTTP 404",
+      "RESOURCE-404"
+    ],
+    "expected_title": "Resource not found",
+    "contains_error_code": true,
+    "expected_difficulty": "hard"
+  },
+  {
+    "file": "kb-gen-001__03__busy_ui.png",
+    "article_id": "KB-GEN-001",
+    "variant": "busy_ui",
+    "error_codes": [
+      "HTTP 404",
+      "RESOURCE-404"
+    ],
+    "expected_title": "Resource not found",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-gen-001__04__slightly_rotated.png",
+    "article_id": "KB-GEN-001",
+    "variant": "slightly_rotated",
+    "error_codes": [
+      "HTTP 404",
+      "RESOURCE-404"
+    ],
+    "expected_title": "Resource not found",
+    "contains_error_code": true,
+    "expected_difficulty": "medium"
+  },
+  {
+    "file": "kb-gen-001__05__clean_light.png",
+    "article_id": "KB-GEN-001",
+    "variant": "clean_light",
+    "error_codes": [
+      "HTTP 404",
+      "RESOURCE-404"
+    ],
+    "expected_title": "Resource not found",
+    "contains_error_code": true,
+    "expected_difficulty": "easy"
+  }
+]

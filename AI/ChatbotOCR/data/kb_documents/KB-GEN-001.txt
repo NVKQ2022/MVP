@@ -1,0 +1,21 @@
+Article ID: KB-GEN-001
+Title: Resource not found
+Product: Customer Portal
+Module: General
+Error Codes: HTTP 404, RESOURCE-404
+
+Symptoms:
+- Requested page or record cannot be found
+
+Root Causes:
+- URL is incorrect
+- Resource was removed
+- Customer lacks access to the expected tenant
+
+Recommended Solutions:
+1. Verify the URL or record ID
+2. Confirm the resource still exists
+3. Confirm the active tenant
+
+Resolution Verification:
+- Open the verified resource URL

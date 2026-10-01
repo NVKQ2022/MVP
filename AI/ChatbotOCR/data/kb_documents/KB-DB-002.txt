@@ -1,0 +1,22 @@
+Article ID: KB-DB-002
+Title: Database connection failed
+Product: Customer Portal
+Module: Database
+Error Codes: DB-CONN-001, HTTP 500
+
+Symptoms:
+- Application cannot load data
+- Database connection error appears
+
+Root Causes:
+- Database is unavailable
+- Connection settings are incorrect
+- Connection pool is exhausted
+
+Recommended Solutions:
+1. Check database health
+2. Verify connection configuration
+3. Review connection-pool metrics
+
+Resolution Verification:
+- Confirm a basic database query succeeds

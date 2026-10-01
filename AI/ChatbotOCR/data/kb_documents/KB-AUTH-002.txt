@@ -1,0 +1,22 @@
+Article ID: KB-AUTH-002
+Title: Customer account is locked
+Product: Customer Portal
+Module: Authentication
+Error Codes: AUTH-403, ACCOUNT-LOCKED, HTTP 403
+
+Symptoms:
+- Customer cannot sign in
+- Account locked message is displayed
+
+Root Causes:
+- Too many unsuccessful sign-in attempts
+- An administrator locked the account
+
+Recommended Solutions:
+1. Verify the customer's identity
+2. Ask an administrator to unlock the account
+3. Reset the password if required
+
+Resolution Verification:
+- Confirm account status is active
+- Ask the customer to sign in again

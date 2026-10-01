@@ -1,0 +1,20 @@
+Article ID: KB-DB-001
+Title: Duplicate key violation
+Product: Customer Portal
+Module: Database
+Error Codes: DB-409, HTTP 409, SQLSTATE[23000]
+
+Symptoms:
+- Record creation fails
+- Duplicate value message appears
+
+Root Causes:
+- A record with the same unique value already exists
+
+Recommended Solutions:
+1. Search for the existing record
+2. Use a different unique value
+3. Do not retry identical create requests repeatedly
+
+Resolution Verification:
+- Confirm only one record exists

@@ -1,0 +1,20 @@
+Article ID: KB-AUTH-003
+Title: Email address has not been verified
+Product: Customer Portal
+Module: Authentication
+Error Codes: EMAIL-VERIFY-001
+
+Symptoms:
+- Sign-in is blocked
+- Email verification required message appears
+
+Root Causes:
+- The verification link was not opened
+- The link expired
+
+Recommended Solutions:
+1. Resend the verification email
+2. Ask the customer to use the newest verification link
+
+Resolution Verification:
+- Confirm the user profile shows a verified email

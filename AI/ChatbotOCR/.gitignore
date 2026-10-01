@@ -25,6 +25,16 @@ demo_output/
 *.swp
 *.swo
 
+# Environments and Secrets
+.env
+.env.*
+!.env.example
+
+# Vector databases
+chroma_db/
+data/chroma_db/
+*.db
+
 # OS files
 .DS_Store
 Thumbs.db

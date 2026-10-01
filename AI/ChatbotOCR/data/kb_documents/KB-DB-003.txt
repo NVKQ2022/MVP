@@ -1,0 +1,20 @@
+Article ID: KB-DB-003
+Title: Database deadlock detected
+Product: Customer Portal
+Module: Database
+Error Codes: DB-DEADLOCK-001
+
+Symptoms:
+- A transaction is rolled back
+- Deadlock message appears
+
+Root Causes:
+- Concurrent transactions lock resources in conflicting order
+
+Recommended Solutions:
+1. Retry the transaction once
+2. Collect the deadlock report
+3. Escalate recurring deadlocks to engineering
+
+Resolution Verification:
+- Confirm the retried transaction completes

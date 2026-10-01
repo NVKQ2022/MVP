@@ -1,0 +1,20 @@
+Article ID: KB-FILE-001
+Title: Uploaded file is too large
+Product: Customer Portal
+Module: File Upload
+Error Codes: FILE-413, HTTP 413
+
+Symptoms:
+- Upload is rejected
+- File too large message appears
+
+Root Causes:
+- File exceeds the configured size limit
+
+Recommended Solutions:
+1. Check the allowed file-size limit
+2. Compress or split the file
+3. Use an approved smaller file
+
+Resolution Verification:
+- Upload a file within the limit

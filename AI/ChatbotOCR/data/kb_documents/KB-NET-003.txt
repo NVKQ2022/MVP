@@ -1,0 +1,21 @@
+Article ID: KB-NET-003
+Title: DNS resolution failed
+Product: Customer Portal
+Module: Network
+Error Codes: DNS-001
+
+Symptoms:
+- Host name cannot be resolved
+- Application cannot connect to the server
+
+Root Causes:
+- Incorrect DNS configuration
+- DNS server is unavailable
+
+Recommended Solutions:
+1. Verify the host name
+2. Check DNS server availability
+3. Flush local DNS cache according to company policy
+
+Resolution Verification:
+- Resolve the host name successfully

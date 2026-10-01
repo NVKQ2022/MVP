@@ -1,0 +1,19 @@
+Article ID: KB-FILE-002
+Title: Unsupported file type
+Product: Customer Portal
+Module: File Upload
+Error Codes: FILE-415, HTTP 415
+
+Symptoms:
+- Upload is rejected
+- Unsupported format message appears
+
+Root Causes:
+- The file extension or MIME type is not allowed
+
+Recommended Solutions:
+1. Check supported formats
+2. Convert the file to an approved format
+
+Resolution Verification:
+- Upload a supported file successfully

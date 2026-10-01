@@ -1,0 +1,23 @@
+Article ID: KB-AUTH-001
+Title: Invalid or expired authentication token
+Product: Customer Portal
+Module: Authentication
+Error Codes: AUTH-401, HTTP 401
+
+Symptoms:
+- Invalid token message
+- User is redirected to the sign-in page
+
+Root Causes:
+- The access token expired
+- The Authorization header is missing
+- The device clock is incorrect
+
+Recommended Solutions:
+1. Ask the customer to sign out and sign in again
+2. Verify the Bearer token is present
+3. Check the device date and time
+
+Resolution Verification:
+- Retry the operation
+- Confirm the request completes successfully

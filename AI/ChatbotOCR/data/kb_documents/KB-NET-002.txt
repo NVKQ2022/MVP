@@ -1,0 +1,21 @@
+Article ID: KB-NET-002
+Title: Service temporarily unavailable
+Product: Customer Portal
+Module: Network
+Error Codes: HTTP 503, SERVICE-503
+
+Symptoms:
+- Service unavailable message appears
+
+Root Causes:
+- Service is restarting
+- Service is overloaded
+- A dependency is unavailable
+
+Recommended Solutions:
+1. Check service health
+2. Wait briefly and retry
+3. Escalate with correlation ID if persistent
+
+Resolution Verification:
+- Confirm health endpoint is available

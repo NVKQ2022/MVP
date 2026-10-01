@@ -1,0 +1,23 @@
+Article ID: KB-NET-001
+Title: Connection timed out
+Product: Customer Portal
+Module: Network
+Error Codes: TIMEOUT, HTTP 504
+
+Symptoms:
+- The operation takes too long
+- A connection timed out message appears
+
+Root Causes:
+- Backend service is unavailable
+- Network connection is unstable
+- Request exceeded the timeout
+
+Recommended Solutions:
+1. Check the network connection
+2. Retry the operation
+3. Check backend service health
+4. Collect logs if the issue persists
+
+Resolution Verification:
+- Retry and confirm a successful response
