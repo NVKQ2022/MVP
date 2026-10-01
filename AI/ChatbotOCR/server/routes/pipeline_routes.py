@@ -7,6 +7,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
+from OCR.config import settings
 from OCR.services.codec.image_codec import ImageCodecError
 from OCR.services.orchestrator.ocr_orchestrator import OCROrchestratorService
 from RAG.services.rag_engine import RAGEngine
@@ -22,6 +23,7 @@ class PipelineDiagnosisResponse(BaseModel):
     ocr_text: str = Field(..., description="Raw text extracted from the screenshot via OCR.")
     sources: list[dict[str, Any]] = Field(default_factory=list, description="Retrieved KB sources and references.")
     pipeline_used: str = Field(default="naive", description="RAG pipeline used: naive, advanced, or agentic.")
+    ocr_version: str = Field(default="PP-OCRv4", description="OCR model architecture used: PP-OCRv4, PP-OCRv3, etc.")
     took_ms: int = Field(default=0, description="Total execution latency in milliseconds.")
     confidence: float = Field(default=1.0, description="Confidence score.")
 
@@ -33,6 +35,7 @@ class PipelineJsonRequest(BaseModel):
     image_url: Optional[str] = Field(None, description="Remote screenshot image URL.")
     message: Optional[str] = Field(None, description="Optional customer message or query.")
     pipeline: str = Field(default="naive", description="Pipeline mode: naive, advanced, or agentic.")
+    ocr_version: Optional[str] = Field(None, description="OCR architecture override: 'PP-OCRv4' (balanced), 'PP-OCRv3' (fastest), or 'PP-OCRv6'")
     top_k: int = Field(default=2, ge=1, le=10, description="Number of knowledge articles to retrieve.")
 
 
@@ -82,6 +85,7 @@ async def diagnose_uploaded_screenshot(
     message: Optional[str] = Form(None, description="Optional customer message or issue description"),
     pipeline: str = Form("naive", description="RAG strategy: 'naive', 'advanced', or 'agentic'"),
     top_k: int = Form(2, ge=1, le=10, description="Number of knowledge articles to retrieve"),
+    ocr_version: Optional[str] = Form(None, description="OCR architecture override: 'PP-OCRv4', 'PP-OCRv3', 'PP-OCRv6'"),
     ocr_orchestrator: OCROrchestratorService = Depends(get_ocr_orchestrator),
     rag_engine: RAGEngine = Depends(get_rag_engine),
 ) -> PipelineDiagnosisResponse:
@@ -103,6 +107,7 @@ async def diagnose_uploaded_screenshot(
             is_url=False,
             min_confidence=0.4,
             sort_reading_order=True,
+            ocr_version=ocr_version,
         )
 
         # Step 2: Feed OCR text directly into PolyRAG
@@ -121,6 +126,7 @@ async def diagnose_uploaded_screenshot(
             ocr_text=ocr_result.full_text,
             sources=sources,
             pipeline_used=pipeline,
+            ocr_version=ocr_version or settings.ocr_version,
             took_ms=total_ms,
             confidence=confidence,
         )
@@ -176,6 +182,7 @@ def diagnose_json_screenshot(
                 is_url=bool(request.image_url),
                 min_confidence=0.4,
                 sort_reading_order=True,
+                ocr_version=request.ocr_version,
             )
             extracted_text = ocr_result.full_text
         elif not (request.message and request.message.strip()):
@@ -200,6 +207,7 @@ def diagnose_json_screenshot(
             ocr_text=extracted_text,
             sources=sources,
             pipeline_used=request.pipeline,
+            ocr_version=request.ocr_version or settings.ocr_version,
             took_ms=total_ms,
             confidence=confidence,
         )

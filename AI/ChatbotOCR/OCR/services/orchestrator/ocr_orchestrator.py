@@ -46,10 +46,11 @@ class OCROrchestratorService:
         lang: Optional[str] = None,
         det: bool = True,
         rec: bool = True,
-        cls: bool = True,
-        min_confidence: float = 0.5,
+        cls: Optional[bool] = None,
+        min_confidence: float = 0.4,
         return_annotated_image: bool = False,
         sort_reading_order: bool = True,
+        ocr_version: Optional[str] = None,
     ) -> OCRResponse:
         """Executes the end-to-end OCR processing pipeline.
 
@@ -63,6 +64,7 @@ class OCROrchestratorService:
             min_confidence: Threshold score (0.0 to 1.0).
             return_annotated_image: Return base64 preview image with bounding boxes.
             sort_reading_order: Sort lines top-to-bottom, left-to-right.
+            ocr_version: Model architecture version override (e.g. PP-OCRv4, PP-OCRv3).
 
         Returns:
             OCRResponse DTO with recognized text and metadata.
@@ -80,6 +82,7 @@ class OCROrchestratorService:
                     det=det,
                     rec=rec,
                     cls=cls,
+                    ocr_version=ocr_version,
                 )
 
             # 3. Filter by confidence threshold

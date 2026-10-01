@@ -48,6 +48,10 @@ class OCRPredictRequest(BaseModel):
         default=True,
         description="If True, orders detected text lines top-to-bottom and left-to-right.",
     )
+    ocr_version: Optional[str] = Field(
+        default=None,
+        description="OCR model architecture override: 'PP-OCRv4' (fast & balanced), 'PP-OCRv3' (ultra fast), or 'PP-OCRv6' (accurate server model).",
+    )
 
     @model_validator(mode="after")
     def check_at_least_one_source(self) -> "OCRPredictRequest":

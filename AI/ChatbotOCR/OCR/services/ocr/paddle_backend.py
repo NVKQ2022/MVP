@@ -12,6 +12,7 @@ os.environ["FLAGS_enable_pir_api"] = "0"
 
 from paddleocr import PaddleOCR
 
+from OCR.config import settings
 from OCR.services.base.base_ocr import BaseOCRBackend, RawOCRItem
 from OCR.utils.logger import get_logger
 
@@ -19,27 +20,29 @@ logger = get_logger(__name__)
 
 
 class PaddleOCRBackend(BaseOCRBackend):
-    """Concrete PaddleOCR Backend using PaddleOCR (PP-OCRv4 / PP-OCRv3 / PP-OCRv2)."""
+    """Concrete PaddleOCR Backend supporting PP-OCRv4 (mobile fast), PP-OCRv3 (ultra fast), and PP-OCRv6."""
 
-    _instances_cache: Dict[Tuple[str, bool, bool], PaddleOCR] = {}
+    _instances_cache: Dict[Tuple[str, bool, bool, str], PaddleOCR] = {}
     _lock = threading.Lock()
 
     def __init__(
         self,
-        default_lang: str = "en",
-        use_gpu: bool = False,
-        use_angle_cls: bool = True,
+        default_lang: Optional[str] = None,
+        use_gpu: Optional[bool] = None,
+        use_angle_cls: Optional[bool] = None,
+        ocr_version: Optional[str] = None,
     ):
-        self.default_lang = default_lang
-        self.use_gpu = use_gpu
-        self.use_angle_cls = use_angle_cls
+        self.default_lang = default_lang or settings.ocr_default_lang
+        self.use_gpu = use_gpu if use_gpu is not None else settings.ocr_use_gpu
+        self.use_angle_cls = use_angle_cls if use_angle_cls is not None else settings.ocr_use_angle_cls
+        self.ocr_version = ocr_version or settings.ocr_version
         self._is_ready = False
 
         # Pre-initialize default language engine
         logger.info(
-            f"Initializing PaddleOCRBackend (default_lang={self.default_lang}, use_gpu={self.use_gpu}, use_angle_cls={self.use_angle_cls})"
+            f"Initializing PaddleOCRBackend (lang={self.default_lang}, gpu={self.use_gpu}, angle_cls={self.use_angle_cls}, version={self.ocr_version})"
         )
-        self._get_or_create_engine(self.default_lang, self.use_gpu, self.use_angle_cls)
+        self._get_or_create_engine(self.default_lang, self.use_gpu, self.use_angle_cls, self.ocr_version)
         self._is_ready = True
 
     @classmethod
@@ -48,28 +51,36 @@ class PaddleOCRBackend(BaseOCRBackend):
         lang: str,
         use_gpu: bool,
         use_angle_cls: bool,
+        ocr_version: Optional[str] = None,
     ) -> PaddleOCR:
         """Retrieves an existing cached PaddleOCR instance or creates a new one safely."""
-        cache_key = (lang.lower(), use_gpu, use_angle_cls)
+        ver = ocr_version or settings.ocr_version
+        cache_key = (lang.lower(), use_gpu, use_angle_cls, ver)
         with cls._lock:
             if cache_key not in cls._instances_cache:
                 logger.info(f"Loading PaddleOCR model instance for cache key: {cache_key}")
                 device_str = "gpu" if use_gpu else "cpu"
                 
-                # Attempt modern PaddleOCR (PaddleX 3.x) initialization
+                # Modern PaddleOCR initialization with performance parameters
                 try:
                     engine = PaddleOCR(
                         lang=lang.lower(),
+                        ocr_version=ver,
                         device=device_str,
                         use_textline_orientation=use_angle_cls,
+                        use_doc_orientation_classify=settings.ocr_use_doc_orientation,
+                        use_doc_unwarping=settings.ocr_use_doc_unwarping,
+                        text_det_limit_side_len=settings.ocr_det_limit_side_len,
                     )
                 except Exception as e:
-                    logger.warning(f"PaddleOCR modern init failed ({e}), attempting legacy init...")
+                    logger.warning(f"PaddleOCR init with version '{ver}' failed ({e}), attempting fallback init...")
                     try:
                         engine = PaddleOCR(
                             lang=lang.lower(),
-                            use_gpu=use_gpu,
-                            use_angle_cls=use_angle_cls,
+                            device=device_str,
+                            use_textline_orientation=use_angle_cls,
+                            use_doc_orientation_classify=False,
+                            use_doc_unwarping=False,
                         )
                     except Exception:
                         engine = PaddleOCR(lang=lang.lower())
@@ -109,17 +120,22 @@ class PaddleOCRBackend(BaseOCRBackend):
         lang: Optional[str] = None,
         det: bool = True,
         rec: bool = True,
-        cls: bool = True,
+        cls: Optional[bool] = None,
+        ocr_version: Optional[str] = None,
     ) -> List[RawOCRItem]:
         """Runs PaddleOCR prediction on the provided image."""
         if image is None or image.size == 0:
             return []
 
         target_lang = lang or self.default_lang
+        angle_cls = cls if cls is not None else self.use_angle_cls
+        ver = ocr_version or self.ocr_version
+
         engine = self._get_or_create_engine(
             lang=target_lang,
             use_gpu=self.use_gpu,
-            use_angle_cls=cls if cls is not None else self.use_angle_cls,
+            use_angle_cls=angle_cls,
+            ocr_version=ver,
         )
 
         with self._lock:

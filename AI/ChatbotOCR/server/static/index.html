@@ -183,6 +183,12 @@
               </svg>
             </button>
 
+            <select id="ocr-version-select" title="OCR Model Architecture (Speed vs Accuracy)" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl px-2.5 py-2.5 focus:outline-none focus:border-indigo-500">
+              <option value="PP-OCRv4" selected>⚡ Balanced (PP-OCRv4 ~4s)</option>
+              <option value="PP-OCRv3">🚀 Fast (PP-OCRv3 ~2s)</option>
+              <option value="PP-OCRv6">🎯 Accurate (PP-OCRv6 ~15s)</option>
+            </select>
+
             <select id="pipeline-select" title="PolyRAG Query Strategy" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl px-2.5 py-2.5 focus:outline-none focus:border-indigo-500">
               <option value="naive" selected>Standard (Naive RAG)</option>
               <option value="advanced">Advanced (Multi-Query)</option>
@@ -252,6 +258,7 @@
     const previewFilename = document.getElementById('preview-filename');
     const previewFilesize = document.getElementById('preview-filesize');
     const btnRemoveAttachment = document.getElementById('btn-remove-attachment');
+    const ocrVersionSelect = document.getElementById('ocr-version-select');
     const pipelineSelect = document.getElementById('pipeline-select');
     const dropOverlay = document.getElementById('drop-overlay');
     const btnClearChat = document.getElementById('btn-clear-chat');
@@ -389,6 +396,7 @@
       const activeImage = currentAttachment;
       const activeText = text;
       const pipeline = pipelineSelect.value;
+      const ocrVersion = ocrVersionSelect ? ocrVersionSelect.value : 'PP-OCRv4';
 
       // Render User Message in Chat
       appendUserMessage(activeText, activeImage ? activeImage.base64 : null);
@@ -412,6 +420,7 @@
           formData.append('file', activeImage.file);
           if (activeText) formData.append('message', activeText);
           formData.append('pipeline', pipeline);
+          formData.append('ocr_version', ocrVersion);
           formData.append('top_k', '2');
 
           const res = await fetch('/api/v1/pipeline/diagnose', {
@@ -432,6 +441,7 @@
             body: JSON.stringify({
               message: activeText,
               pipeline: pipeline,
+              ocr_version: ocrVersion,
               top_k: 2,
             }),
           });
@@ -571,7 +581,11 @@
         </div>
         <div class="max-w-2xl bg-slate-800/90 border border-slate-700/70 rounded-2xl rounded-tl-sm p-4 text-slate-200 text-sm shadow-md">
           <div class="flex items-center justify-between text-[11px] text-slate-400 mb-2 pb-2 border-b border-slate-700/50">
-            <span class="font-medium text-indigo-400 uppercase tracking-wider text-[10px]">${data.pipeline_used || 'Standard'} Pipeline</span>
+            <div class="flex items-center space-x-1.5">
+              <span class="font-medium text-indigo-400 uppercase tracking-wider text-[10px]">${data.pipeline_used || 'Standard'} Pipeline</span>
+              <span class="text-slate-600">&bull;</span>
+              <span class="font-medium text-sky-400 text-[10px]">${data.ocr_version || 'PP-OCRv4'}</span>
+            </div>
             <span>⚡ ${data.took_ms || 0} ms</span>
           </div>
 

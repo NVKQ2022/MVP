@@ -26,7 +26,8 @@ class BaseOCRBackend(ABC):
         lang: Optional[str] = None,
         det: bool = True,
         rec: bool = True,
-        cls: bool = True,
+        cls: Optional[bool] = None,
+        ocr_version: Optional[str] = None,
     ) -> List[RawOCRItem]:
         """Runs OCR inference on an in-memory BGR/RGB numpy image.
 

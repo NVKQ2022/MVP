@@ -35,7 +35,8 @@ class MockOCRBackend(BaseOCRBackend):
         lang: Optional[str] = None,
         det: bool = True,
         rec: bool = True,
-        cls: bool = True,
+        cls: Optional[bool] = None,
+        ocr_version: Optional[str] = None,
     ) -> List[RawOCRItem]:
         """Generates deterministic mock OCR results based on image dimensions."""
         if image is None or image.size == 0:
