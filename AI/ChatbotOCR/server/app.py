@@ -5,8 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from server.config import server_settings
-from server.routes import health_router, ocr_router, rag_router
-from server.dependencies import get_ocr_orchestrator
+from server.routes import health_router, ocr_router, rag_router, pipeline_router
+from server.dependencies import get_ocr_orchestrator, get_rag_engine
 from OCR.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -24,8 +24,13 @@ async def lifespan(app: FastAPI):
         logger.info(
             f"OCR Backend '{info.active_backend}' warmed up successfully (Device: {'GPU' if info.use_gpu else 'CPU'})."
         )
+
+        # Pre-warm RAG knowledge base
+        logger.info("Pre-warming RAG engine and verifying knowledge base index...")
+        rag_engine = get_rag_engine()
+        logger.info(f"RAG Engine ready with {rag_engine.vector_store.count()} indexed chunks.")
     except Exception as e:
-        logger.error(f"Failed to pre-warm OCR backend: {e}", exc_info=True)
+        logger.error(f"Failed to pre-warm backend engines: {e}", exc_info=True)
 
     yield
 
@@ -56,6 +61,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(ocr_router)
     app.include_router(rag_router)
+    app.include_router(pipeline_router)
 
     return app
 
