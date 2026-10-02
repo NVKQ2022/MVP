@@ -55,8 +55,8 @@ def main() -> None:
     engine = RAGEngine()
 
     if args.ingest or engine.vector_store.count() == 0:
-        print("📥 Ingesting knowledge documents into ChromaDB...")
-        count = engine.ingest_kb_documents()
+        print(f"📥 Ingesting knowledge documents into {engine.vector_store_type} vector store...")
+        count = engine.ingest_kb_documents(force_regenerate=args.ingest)
         print(f"✅ Ingested {count} chunks. Total indexed: {engine.vector_store.count()}\n")
 
     def run_query(question: str) -> None:

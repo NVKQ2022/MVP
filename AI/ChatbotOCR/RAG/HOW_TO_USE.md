@@ -625,7 +625,23 @@ emb.dim   # → 1536
 
 ### 9.3 Vector Stores
 
-#### `ChromaVectorStore` (persistent, recommended for production)
+#### `MilvusLiteVectorStore` (embedded local Milvus, recommended)
+
+Milvus Lite runs entirely in-process and stores vectors and metadata in a single local database file/folder (e.g., `./data/milvus_lite.db`).
+
+```python
+from polyrag import MilvusLiteVectorStore
+
+store = MilvusLiteVectorStore(
+    db_path="./data/milvus_lite.db",    # Embedded SQLite/local database file
+    collection_name="support_kb",       # Target collection name
+    dimension=384,                      # Vector dimension (inferred if None)
+    metric_type="COSINE",               # Distance metric: COSINE, L2, IP
+)
+# Requires: pip install pymilvus[milvus_lite]
+```
+
+#### `ChromaVectorStore` (persistent ChromaDB)
 
 ```python
 from polyrag import ChromaVectorStore

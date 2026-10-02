@@ -26,12 +26,16 @@ def run_full_pipeline_verification():
     print(f"  ... and {len(files) - 4} more.")
 
     print("\n" + "=" * 70)
-    print("📦 STEP 2: INITIALIZE PolyRAG ENGINE & INGEST DOCUMENTS")
+    print("📦 STEP 2: INITIALIZE PolyRAG ENGINE & INGEST DOCUMENTS (Milvus Lite)")
     print("=" * 70)
-    # Using fresh in-memory store for isolated end-to-end test verification
-    engine = RAGEngine(use_in_memory=True)
-    ingested_count = engine.ingest_kb_documents(docs_dir="data/kb_documents")
-    print(f"✅ Ingestion complete: {ingested_count} chunks indexed in vector store.")
+    import shutil
+    test_db = Path("data/milvus_pipeline_test.db")
+    if test_db.exists():
+        shutil.rmtree(test_db) if test_db.is_dir() else test_db.unlink()
+
+    engine = RAGEngine(db_path=str(test_db), vector_store_type="milvus_lite")
+    ingested_count = engine.ingest_kb_documents(docs_dir="data/kb_documents", force_regenerate=True)
+    print(f"✅ Ingestion complete: {ingested_count} chunks indexed in Milvus Lite ({engine.vector_store.count()} total).")
 
     print("\n" + "=" * 70)
     print("🔍 STEP 3: TEST RETRIEVAL (Vector Similarity Search)")
@@ -88,6 +92,10 @@ def run_full_pipeline_verification():
     print("\n" + "=" * 70)
     print("🎉 ALL TESTS COMPLETED SUCCESSFULLY!")
     print("=" * 70)
+
+    # Cleanup temporary test database
+    if test_db.exists():
+        shutil.rmtree(test_db) if test_db.is_dir() else test_db.unlink()
 
 
 if __name__ == "__main__":

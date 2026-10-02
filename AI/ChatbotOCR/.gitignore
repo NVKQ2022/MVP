@@ -33,7 +33,10 @@ demo_output/
 # Vector databases
 chroma_db/
 data/chroma_db/
+milvus_lite.db/
+data/milvus_lite.db/
 *.db
+*.db/
 
 # OS files
 .DS_Store

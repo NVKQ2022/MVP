@@ -15,7 +15,7 @@ RAG/
 ├── HOW_TO_USE.md             # Complete package reference & guide for PolyRAG
 └── services/
     ├── __init__.py
-    └── rag_engine.py         # PolyRAG engine orchestrator (ChromaDB + SentenceTransformers)
+    └── rag_engine.py         # PolyRAG engine orchestrator (Milvus Lite + SentenceTransformers)
 ```
 
 ---

@@ -33,7 +33,18 @@ class RAGSettings(BaseModel):
         default_factory=lambda: os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
     )
 
-    # ChromaDB Vector Store
+    # Vector Store Settings
+    vector_store_type: str = Field(
+        default_factory=lambda: os.getenv("VECTOR_STORE_TYPE", "milvus_lite").lower()
+    )
+    milvus_db_path: str = Field(
+        default_factory=lambda: os.getenv("MILVUS_DB_PATH", "./data/milvus_lite.db")
+    )
+    milvus_collection_name: str = Field(
+        default_factory=lambda: os.getenv("MILVUS_COLLECTION_NAME", "support_kb")
+    )
+
+    # ChromaDB Vector Store (retained for backward compatibility)
     chroma_persist_dir: str = Field(
         default_factory=lambda: os.getenv("CHROMA_PERSIST_DIR", "./data/chroma_db")
     )

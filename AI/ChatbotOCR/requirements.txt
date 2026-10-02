@@ -17,6 +17,7 @@ pillow>=10.0.0
 
 # RAG & NLP Subsystem
 polyrag @ git+https://github.com/NVKQ2022/PolyRAG.git
+pymilvus[milvus_lite]>=3.0.0
 chromadb>=0.5.0
 sentence-transformers>=3.0.0
 openai>=1.30.0

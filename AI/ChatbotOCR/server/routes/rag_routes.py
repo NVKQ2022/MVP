@@ -12,7 +12,8 @@ rag_router = APIRouter(prefix="/api/v1/rag", tags=["RAG"])
 class RAGStatusResponse(BaseModel):
     status: str = Field(default="ready", description="RAG subsystem operational status.")
     indexed_chunks: int = Field(default=0, description="Total indexed knowledge chunks in vector database.")
-    collection_name: str = Field(default="", description="Active ChromaDB collection name.")
+    vector_store: str = Field(default="milvus_lite", description="Active vector store engine type.")
+    collection_name: str = Field(default="", description="Active vector store collection name.")
     embedding_model: str = Field(default="", description="Active embedding model name.")
 
 
@@ -22,6 +23,7 @@ def get_rag_status(engine: RAGEngine = Depends(get_rag_engine)) -> RAGStatusResp
     return RAGStatusResponse(
         status="ready",
         indexed_chunks=engine.vector_store.count(),
+        vector_store=engine.vector_store_type,
         collection_name=engine.collection_name,
         embedding_model=engine.embedding_model_name,
     )
