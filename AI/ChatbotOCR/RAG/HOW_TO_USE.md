@@ -1,9 +1,9 @@
 # PolyRAG — How To Use
 
-> **Package**: `polyrag==0.1.2`
+> **Package**: `polyrag==0.1.5`
 > **Install**: `pip install git+https://github.com/NVKQ2022/PolyRAG.git`
 > **Only dependency**: `pydantic>=2.0.0` (everything else is optional based on what you use)
-> **Vector Store Support**: ChromaDB (persistent) + InMemory (transient). **No Milvus support yet.**
+> **Vector Store Support**: ChromaDB (persistent) + InMemory (transient) + Milvus / Milvus Lite (v0.1.5+).
 
 ---
 
@@ -1043,8 +1043,15 @@ Default chunker is `RecursiveCharacterChunker(chunk_size=550, chunk_overlap=35)`
 | `BaseVectorStore` | ABC | Vector store interface |
 | `ChromaVectorStore` | class | ChromaDB persistent store |
 | `InMemoryVectorStore` | class | In-memory cosine similarity store |
+| `MilvusVectorStore` / `MilvusLiteVectorStore` | class | Milvus / Milvus Lite vector store (v0.1.5+) |
 | `BaseLLMClient` | ABC | LLM client interface |
-| `OpenAILLM` | class | OpenAI / Azure / compatible LLM adapter |
+| `OpenAILLM` / `ChatOpenAI` | class | OpenAI / Azure / compatible LLM adapter |
+| `resolve_chunker` | function | Auto-resolver for chunking strategy (v0.1.5+) |
+| `resolve_embedding_model` | function | Auto-resolver for embedding models (v0.1.5+) |
+| `resolve_llm_client` / `resolve_chat_model` | function | Auto-resolver for LLM clients (v0.1.5+) |
+| `LangChainDocumentConverter` | class | Converter between LangChain Documents & PolyRAG (v0.1.5+) |
+| `LangChainEmbeddingAdapter` | class | Adapter to wrap LangChain Embeddings (v0.1.5+) |
+| `LangChainChatModelAdapter` | class | Adapter to wrap LangChain BaseChatModel (v0.1.5+) |
 | `Document` | dataclass | Input document model |
 | `Chunk` | dataclass | Chunked document segment |
 | `SearchResult` | dataclass | Vector search result |

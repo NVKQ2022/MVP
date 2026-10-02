@@ -1,11 +1,11 @@
-"""PolyRAG Engine: Integrates polyrag package to ingest and retrieve support KB documents."""
+"""PolyRAG Engine: Integrates polyrag 0.1.5 NaiveRAG to ingest and retrieve support KB documents."""
 
 import logging
 from pathlib import Path
 from typing import Any
 
 from polyrag import (
-    PolyRAG,
+    NaiveRAG,
     RecursiveCharacterChunker,
     SentenceTransformerEmbedding,
     ChromaVectorStore,
@@ -14,7 +14,6 @@ from polyrag import (
     RAGResponse,
 )
 from polyrag.core.interfaces import BaseVectorStore, BaseLLMClient
-from polyrag.core.models import AgentResponse
 
 from RAG.config import rag_settings
 
@@ -23,13 +22,13 @@ logger = logging.getLogger(__name__)
 
 class RAGEngine:
     """
-    RAG Orchestrator powered by the PolyRAG package.
+    RAG Engine powered by PolyRAG 0.1.5 NaiveRAG pipeline.
     
     Coordinates:
-    - Text file document ingestion from knowledge base
+    - Text document ingestion from data/kb_documents/
     - ChromaDB persistent storage / InMemory fallback
-    - Semantic embedding search
-    - Response generation (Naive, Advanced with RRF fusion, Agentic)
+    - Semantic dense embedding search (SentenceTransformers / OpenAI)
+    - Grounded 1-shot support answer generation using NaiveRAG
     """
 
     def __init__(
@@ -45,7 +44,7 @@ class RAGEngine:
         self.embedding_model_name = embedding_model or rag_settings.embedding_model
         self.model_name = model_name or rag_settings.model_name
 
-        # 1. Initialize Chunker (sized to preserve complete troubleshooting articles)
+        # 1. Initialize Chunker
         self.chunker = RecursiveCharacterChunker(
             chunk_size=rag_settings.chunk_size,
             chunk_overlap=rag_settings.chunk_overlap,
@@ -88,8 +87,8 @@ class RAGEngine:
         else:
             logger.warning("No OPENAI_API_KEY found. RAG generation will run in retrieval-only mode.")
 
-        # 5. Initialize PolyRAG Application Context
-        self.app = PolyRAG(
+        # 5. Initialize NaiveRAG Pipeline (PolyRAG 0.1.5)
+        self.naive_rag = NaiveRAG(
             chunker=self.chunker,
             embedding_model=self.embedding_model,
             vector_store=self.vector_store,
@@ -102,7 +101,7 @@ class RAGEngine:
         force_regenerate: bool = False,
     ) -> int:
         """
-        Ingest all support text/markdown documents from the KB documents directory into PolyRAG.
+        Ingest all support text/markdown documents from the KB documents directory into PolyRAG NaiveRAG.
         Scans *.txt and *.md files directly as the primary knowledge base.
         """
         target_dir = Path(docs_dir or rag_settings.kb_docs_dir)
@@ -114,7 +113,7 @@ class RAGEngine:
         if not txt_files:
             raise FileNotFoundError(f"No .txt or .md knowledge documents found in {target_dir}")
 
-        logger.info(f"Found {len(txt_files)} knowledge base documents in {target_dir}. Ingesting into PolyRAG vector store...")
+        logger.info(f"Found {len(txt_files)} knowledge base documents in {target_dir}. Ingesting into NaiveRAG vector store...")
 
         total_chunks = 0
         for f in txt_files:
@@ -126,7 +125,7 @@ class RAGEngine:
                     key, val = line.split(":", 1)
                     metadata[key.strip().lower().replace(" ", "_")] = val.strip()
 
-            chunks = self.app.ingest_text(
+            chunks = self.naive_rag.ingest_text(
                 text=text,
                 source=f.name,
                 metadata=metadata,
@@ -137,14 +136,17 @@ class RAGEngine:
         return total_chunks
 
     def search(self, query: str, top_k: int | None = None) -> list[dict[str, Any]]:
-        """Perform semantic search over the ingested knowledge base."""
+        """Perform semantic vector search over the ingested knowledge base."""
         k = top_k or rag_settings.top_k
-        return self.app.retrieve(query=query, top_k=k)
+        return self.naive_rag.retrieve(query=query, top_k=k)
 
     def query_naive(self, question: str, top_k: int | None = None) -> RAGResponse:
-        """Run standard Naive retrieve-then-read RAG pipeline."""
+        """Run standard Naive retrieve-then-read RAG pipeline using PolyRAG 0.1.5 NaiveRAG."""
         k = top_k or rag_settings.top_k
-        return self.app.query(question=question, top_k=k)
+        return self.naive_rag.execute(question=question, top_k=k)
+
+    # Convenience alias for primary query method
+    query = query_naive
 
     def query_advanced(
         self,
@@ -153,14 +155,8 @@ class RAGEngine:
         num_expanded_queries: int = 3,
         verbose: bool = False,
     ) -> RAGResponse:
-        """Run Advanced RAG with multi-query expansion and RRF fusion."""
-        k = top_k or rag_settings.top_k
-        pipeline = self.app.create_advanced_rag(
-            top_k=k,
-            num_expanded_queries=num_expanded_queries,
-            verbose=verbose,
-        )
-        return pipeline.execute(question=question, top_k=k)
+        """Fallback to NaiveRAG when advanced pipeline is requested."""
+        return self.query_naive(question=question, top_k=top_k)
 
     def query_agentic(
         self,
@@ -169,27 +165,5 @@ class RAGEngine:
         max_rounds: int = 2,
         verbose: bool = False,
     ) -> RAGResponse:
-        """Run Agentic RAG with dynamic planning, reflection, and iterative retrieval."""
-        k = top_k or rag_settings.top_k
-        pipeline = self.app.create_agentic_rag(
-            top_k=k,
-            max_rounds=max_rounds,
-            verbose=verbose,
-        )
-        return pipeline.execute(question=question, top_k=k, max_rounds=max_rounds)
-
-    def query_react(
-        self,
-        question: str,
-        top_k: int | None = None,
-        max_steps: int = 4,
-        verbose: bool = False,
-    ) -> AgentResponse:
-        """Run ReAct agent with Thought-Action-Observation trajectory."""
-        k = top_k or rag_settings.top_k
-        agent = self.app.create_react_agent(
-            max_steps=max_steps,
-            default_top_k=k,
-            verbose=verbose,
-        )
-        return agent.execute(question=question, top_k=k, max_steps=max_steps)
+        """Fallback to NaiveRAG when agentic pipeline is requested."""
+        return self.query_naive(question=question, top_k=top_k)
