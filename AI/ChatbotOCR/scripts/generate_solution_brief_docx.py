@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
 Generate a clean, simple, and comprehensive DOCX document describing
-the Support Screenshot Chatbot End-to-End Pipeline.
+the Support Screenshot Chatbot End-to-End Pipeline and How to Run It.
 
 Key constraints respected:
 - Describes the end-to-end pipeline and what each step does without over-complicating every individual component.
+- Clear, practical guide on how to run the project (Web UI, CLI diagnosis, tests).
 - All text uses the exact same uniform color throughout (pure black: RGB(0, 0, 0)).
 - Simple, clear, and fully covers the project workflow and rationale.
 """
@@ -115,6 +116,38 @@ def add_bullet_item(doc, text="", bold_prefix=""):
         r_t.font.color.rgb = UNIFORM_COLOR
     return p
 
+def add_code_snippet(doc, code_text):
+    """Add a simple monospace block with uniform black text."""
+    tbl = doc.add_table(rows=1, cols=1)
+    tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl.autofit = False
+    tbl.columns[0].width = Inches(6.5)
+
+    cell = tbl.cell(0, 0)
+    set_cell_background(cell, "F3F4F6")
+    set_cell_margins(cell, top=60, bottom=60, left=120, right=120)
+
+    tc_pr = cell._tc.get_or_add_tcPr()
+    tc_borders = parse_xml(
+        f'<w:tcBorders {nsdecls("w")}>'
+        f'<w:top w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>'
+        f'<w:left w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>'
+        f'<w:bottom w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>'
+        f'<w:right w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>'
+        f'</w:tcBorders>'
+    )
+    tc_pr.append(tc_borders)
+
+    p = cell.paragraphs[0]
+    p.paragraph_format.space_before = Pt(2)
+    p.paragraph_format.space_after = Pt(2)
+    run = p.add_run(code_text)
+    run.font.name = "Consolas"
+    run.font.size = Pt(9)
+    run.font.color.rgb = UNIFORM_COLOR
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(2)
+
 def add_callout_box(doc, text, bold_title=""):
     tbl = doc.add_table(rows=1, cols=1)
     tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -169,7 +202,7 @@ def generate_simple_docx(output_path):
     title_p = doc.add_paragraph()
     title_p.paragraph_format.space_before = Pt(0)
     title_p.paragraph_format.space_after = Pt(2)
-    r_title = title_p.add_run("Support Screenshot Chatbot: End-to-End Pipeline")
+    r_title = title_p.add_run("Support Screenshot Chatbot: End-to-End Pipeline & Execution Guide")
     r_title.bold = True
     r_title.font.name = FONT_FAMILY
     r_title.font.size = Pt(18)
@@ -178,7 +211,7 @@ def generate_simple_docx(output_path):
     sub_p = doc.add_paragraph()
     sub_p.paragraph_format.space_before = Pt(0)
     sub_p.paragraph_format.space_after = Pt(8)
-    r_sub = sub_p.add_run("Project Overview and Step-by-Step Processing Flow")
+    r_sub = sub_p.add_run("Project Overview, Step-by-Step Processing Flow, and How to Run the Application")
     r_sub.font.name = FONT_FAMILY
     r_sub.font.size = Pt(11)
     r_sub.font.italic = True
@@ -250,7 +283,7 @@ def generate_simple_docx(output_path):
     add_heading_1(doc, "2. End-to-End Pipeline (Step-by-Step Flow)")
 
     add_body_paragraph(doc,
-        "The pipeline processes each user request through five clear, sequential stages from upload to response:")
+        "The pipeline processes each user request through six clear, sequential stages from upload to response:")
 
     add_heading_2(doc, "Step 1: Image Upload & Format Validation")
     add_body_paragraph(doc,
@@ -364,7 +397,7 @@ def generate_simple_docx(output_path):
     add_heading_1(doc, "4. Why the Pipeline Is Designed This Way")
 
     add_body_paragraph(doc,
-        "The pipeline choices prioritize three critical requirements: accuracy, privacy, and speed:")
+        "The pipeline choices prioritize four critical engineering goals: accuracy, privacy, zero infrastructure, and low latency:")
 
     add_bullet_item(doc,
         "Large vision models frequently hallucinate or drop characters in technical alphanumeric codes (e.g. confusing '0' and 'O', "
@@ -387,8 +420,59 @@ def generate_simple_docx(output_path):
         bold_prefix="High Speed & Low Cost: "
     )
 
-    # ==================== SECTION 5: VERIFICATION ====================
-    add_heading_1(doc, "5. Verification & Testing")
+    # ==================== SECTION 5: HOW TO RUN THIS PROJECT ====================
+    add_heading_1(doc, "5. How to Run This Project")
+
+    add_body_paragraph(doc,
+        "The project is packaged with a unified CLI entrypoint (main.py) and a FastAPI web server, enabling straightforward setup and execution.")
+
+    add_heading_2(doc, "5.1 Prerequisites & Environment Setup")
+    add_body_paragraph(doc, "1. Clone the repository and enter the project directory:")
+    add_code_snippet(doc, "git clone https://github.com/NVKQ2022/MVP.git\ncd MVP/AI/ChatbotOCR")
+
+    add_body_paragraph(doc, "2. Create and activate a Python virtual environment (Python 3.10+ or 3.12):")
+    add_code_snippet(doc, "python3 -m venv venv\nsource venv/bin/activate    # On Windows: venv\\Scripts\\activate")
+
+    add_body_paragraph(doc, "3. Install the project dependencies:")
+    add_code_snippet(doc, "pip install -r requirements.txt")
+
+    add_body_paragraph(doc, "4. Configure environment variables (.env file):")
+    add_body_paragraph(doc,
+        "Copy .env.example to .env and provide your Azure OpenAI credentials (API key, endpoint, model deployment name):")
+    add_code_snippet(doc, "cp .env.example .env\n# Edit .env with your AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT")
+
+    add_heading_2(doc, "5.2 Starting the Web Chat Application")
+    add_body_paragraph(doc, "Launch the application using the root runner:")
+    add_code_snippet(doc, "python main.py\n# Or explicitly: python main.py server --host 0.0.0.0 --port 8000")
+
+    add_body_paragraph(doc, "Once started, open your web browser to:")
+    add_bullet_item(doc, "http://localhost:8000 — Interactive single-page support chatbot UI with drag-and-drop screenshot upload.", bold_prefix="Web Chat Interface: ")
+    add_bullet_item(doc, "http://localhost:8000/docs — Interactive OpenAPI / Swagger documentation for testing REST endpoints directly.", bold_prefix="API Documentation: ")
+
+    add_heading_2(doc, "5.3 Running End-to-End Terminal Diagnosis (CLI)")
+    add_body_paragraph(doc,
+        "You can diagnose an error screenshot directly from the terminal without opening a browser:")
+    add_code_snippet(doc, "python main.py diagnose data/sample_screenshots/kb-auth-001__01__clean_light.png")
+    add_body_paragraph(doc,
+        "This command executes the full pipeline in the terminal: extracts text using PaddleOCR, searches Milvus Lite, "
+        "and prints the grounded resolution along with latency and confidence metrics.")
+
+    add_heading_2(doc, "5.4 Standalone OCR and RAG Commands")
+    add_bullet_item(doc, "Run OCR on any image and optionally save annotated visual boxes:", bold_prefix="Standalone OCR: ")
+    add_code_snippet(doc, "python main.py ocr demo_output/sample_invoice.jpg --save-annotated demo_output/result.jpg")
+
+    add_bullet_item(doc, "Ask questions directly against the technical knowledge base:", bold_prefix="Standalone Knowledge Query: ")
+    add_code_snippet(doc, 'python main.py rag -q "How do I fix authentication token expired error?"')
+
+    add_heading_2(doc, "5.5 Running the Automated Test Suite")
+    add_body_paragraph(doc, "Run all unit and integration tests across the OCR, RAG, and Server subsystems:")
+    add_code_snippet(doc, "pytest")
+
+    add_body_paragraph(doc, "Run the end-to-end knowledge base pipeline test verifying all 12 support scenarios:")
+    add_code_snippet(doc, "python RAG/test_rag_pipeline.py")
+
+    # ==================== SECTION 6: VERIFICATION ====================
+    add_heading_1(doc, "6. Verification & Robustness Results")
 
     add_body_paragraph(doc,
         "The end-to-end pipeline was validated through automated tests covering all functional and edge-case requirements:")
@@ -406,7 +490,7 @@ def generate_simple_docx(output_path):
     )
     add_bullet_item(doc,
         "24 automated unit and integration tests verify the image codec, spatial reading order, regex entity extractor, "
-        "privacy scrubber, vector ingestion, and FastAPI endpoints.",
+        "privacy scrubber, vector ingestion, and FastAPI endpoints with zero failures.",
         bold_prefix="24/24 Automated Tests Passing: "
     )
 
