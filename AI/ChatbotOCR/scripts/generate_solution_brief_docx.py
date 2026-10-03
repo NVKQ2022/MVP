@@ -7,7 +7,8 @@ Key constraints respected:
 - Describes the end-to-end pipeline and what each step does without over-complicating every individual component.
 - Clear, practical guide on how to run the project (Web UI, CLI diagnosis, tests).
 - All text uses the exact same uniform color throughout (pure black: RGB(0, 0, 0)).
-- Simple, clear, and fully covers the project workflow and rationale.
+- Basic original Word table style ('Table Grid') with standard grid borders and clean transparent cells (no custom gray shading).
+- Code snippets formatted as clean indented monospace paragraphs rather than table boxes.
 """
 
 import os
@@ -22,14 +23,8 @@ from docx.oxml.ns import nsdecls
 UNIFORM_COLOR = RGBColor(0, 0, 0)
 FONT_FAMILY = "Calibri"
 
-def set_cell_background(cell, hex_color):
-    """Set background color of a table cell."""
-    tc_pr = cell._tc.get_or_add_tcPr()
-    shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{hex_color}"/>')
-    tc_pr.append(shd)
-
-def set_cell_margins(cell, top=100, bottom=100, left=140, right=140):
-    """Set cell padding in dxa (1 pt = 20 dxa)."""
+def set_cell_margins(cell, top=80, bottom=80, left=100, right=100):
+    """Set standard cell padding in dxa (1 pt = 20 dxa)."""
     tc_pr = cell._tc.get_or_add_tcPr()
     tc_mar = parse_xml(
         f'<w:tcMar {nsdecls("w")}>'
@@ -40,21 +35,6 @@ def set_cell_margins(cell, top=100, bottom=100, left=140, right=140):
         f'</w:tcMar>'
     )
     tc_pr.append(tc_mar)
-
-def set_clean_table_borders(table, color="CCCCCC", sz="4"):
-    """Set standard subtle borders on all table cells."""
-    tbl_pr = table._tbl.tblPr
-    borders = parse_xml(
-        f'<w:tblBorders {nsdecls("w")}>'
-        f'<w:top w:val="single" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-        f'<w:bottom w:val="single" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-        f'<w:left w:val="none"/>'
-        f'<w:right w:val="none"/>'
-        f'<w:insideH w:val="single" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-        f'<w:insideV w:val="none"/>'
-        f'</w:tblBorders>'
-    )
-    tbl_pr.append(borders)
 
 def add_heading_1(doc, text):
     p = doc.add_paragraph()
@@ -117,81 +97,39 @@ def add_bullet_item(doc, text="", bold_prefix=""):
     return p
 
 def add_code_snippet(doc, code_text):
-    """Add a simple monospace block with uniform black text."""
-    tbl = doc.add_table(rows=1, cols=1)
-    tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
-    tbl.autofit = False
-    tbl.columns[0].width = Inches(6.5)
-
-    cell = tbl.cell(0, 0)
-    set_cell_background(cell, "F3F4F6")
-    set_cell_margins(cell, top=60, bottom=60, left=120, right=120)
-
-    tc_pr = cell._tc.get_or_add_tcPr()
-    tc_borders = parse_xml(
-        f'<w:tcBorders {nsdecls("w")}>'
-        f'<w:top w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>'
-        f'<w:left w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>'
-        f'<w:bottom w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>'
-        f'<w:right w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>'
-        f'</w:tcBorders>'
-    )
-    tc_pr.append(tc_borders)
-
-    p = cell.paragraphs[0]
+    """Add an indented monospace code block (no table wrapping)."""
+    p = doc.add_paragraph()
+    p.paragraph_format.left_indent = Inches(0.25)
     p.paragraph_format.space_before = Pt(2)
-    p.paragraph_format.space_after = Pt(2)
+    p.paragraph_format.space_after = Pt(4)
     run = p.add_run(code_text)
     run.font.name = "Consolas"
-    run.font.size = Pt(9)
+    run.font.size = Pt(9.5)
     run.font.color.rgb = UNIFORM_COLOR
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(2)
-
 def add_callout_box(doc, text, bold_title=""):
-    tbl = doc.add_table(rows=1, cols=1)
-    tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
-    tbl.autofit = False
-    tbl.columns[0].width = Inches(6.5)
-
-    cell = tbl.cell(0, 0)
-    set_cell_background(cell, "F9FAFB")
-    set_cell_margins(cell, top=120, bottom=120, left=160, right=160)
-
-    tc_pr = cell._tc.get_or_add_tcPr()
-    tc_borders = parse_xml(
-        f'<w:tcBorders {nsdecls("w")}>'
-        f'<w:top w:val="single" w:sz="4" w:space="0" w:color="999999"/>'
-        f'<w:left w:val="single" w:sz="18" w:space="0" w:color="000000"/>'
-        f'<w:bottom w:val="single" w:sz="4" w:space="0" w:color="999999"/>'
-        f'<w:right w:val="single" w:sz="4" w:space="0" w:color="999999"/>'
-        f'</w:tcBorders>'
-    )
-    tc_pr.append(tc_borders)
-
-    p = cell.paragraphs[0]
-    p.paragraph_format.space_before = Pt(2)
-    p.paragraph_format.space_after = Pt(2)
+    """Add a clean indented note block with bold title."""
+    p = doc.add_paragraph()
+    p.paragraph_format.left_indent = Inches(0.25)
+    p.paragraph_format.right_indent = Inches(0.25)
+    p.paragraph_format.space_before = Pt(4)
+    p.paragraph_format.space_after = Pt(6)
     p.paragraph_format.line_spacing = 1.15
-
     if bold_title:
-        r_title = p.add_run(bold_title + "\n")
+        r_title = p.add_run(bold_title + ": ")
         r_title.bold = True
         r_title.font.name = FONT_FAMILY
-        r_title.font.size = Pt(10.5)
+        r_title.font.size = Pt(10)
         r_title.font.color.rgb = UNIFORM_COLOR
-
     r_text = p.add_run(text)
     r_text.font.name = FONT_FAMILY
     r_text.font.size = Pt(10)
     r_text.font.color.rgb = UNIFORM_COLOR
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(3)
-
 def generate_simple_docx(output_path):
     doc = Document()
 
-    # Set 0.75 inch margins
+    # Set standard 0.75 inch margins
     for sec in doc.sections:
         sec.top_margin = Inches(0.75)
         sec.bottom_margin = Inches(0.75)
@@ -217,11 +155,10 @@ def generate_simple_docx(output_path):
     r_sub.font.italic = True
     r_sub.font.color.rgb = UNIFORM_COLOR
 
-    # Metadata table (All text uniform black)
-    meta_tbl = doc.add_table(rows=2, cols=4)
+    # Metadata table (Basic original Table Grid, no background fills)
+    meta_tbl = doc.add_table(rows=2, cols=4, style='Table Grid')
     meta_tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
     meta_tbl.autofit = False
-    set_clean_table_borders(meta_tbl, color="E5E7EB")
 
     col_widths = [Inches(1.2), Inches(2.1), Inches(1.2), Inches(2.0)]
     meta_items = [
@@ -233,9 +170,9 @@ def generate_simple_docx(output_path):
     for idx, (label, val) in enumerate(meta_items):
         r = idx // 2
         c = (idx % 2) * 2
+
         cell_lbl = meta_tbl.cell(r, c)
         cell_lbl.width = col_widths[c]
-        set_cell_background(cell_lbl, "F3F4F6")
         set_cell_margins(cell_lbl, top=50, bottom=50, left=80, right=80)
         p_l = cell_lbl.paragraphs[0]
         p_l.paragraph_format.space_after = Pt(0)
@@ -247,7 +184,6 @@ def generate_simple_docx(output_path):
 
         cell_val = meta_tbl.cell(r, c+1)
         cell_val.width = col_widths[c+1]
-        set_cell_background(cell_val, "FFFFFF")
         set_cell_margins(cell_val, top=50, bottom=50, left=80, right=80)
         p_v = cell_val.paragraphs[0]
         p_v.paragraph_format.space_after = Pt(0)
@@ -273,7 +209,7 @@ def generate_simple_docx(output_path):
         "procedures in a vector knowledge base (Milvus Lite), and generates a verified, step-by-step resolution for the user in a clean chat window.")
 
     add_callout_box(doc,
-        "Core Rule: Visual information extraction is strictly non-LLM. The system extracts error codes and messages using local OCR "
+        "Visual information extraction is strictly non-LLM. The system extracts error codes and messages using local OCR "
         "and deterministic rules. This prevents hallucinations on exact codes, protects customer privacy by masking sensitive data locally, "
         "and keeps extraction latency under 300 milliseconds. The LLM is only used at the very end to write a helpful, grounded response.",
         bold_title="Core Architectural Principle"
@@ -347,24 +283,23 @@ def generate_simple_docx(output_path):
     add_body_paragraph(doc,
         "The table below summarizes what each stage of the pipeline receives, what action it performs, and what output it produces:")
 
-    summary_tbl = doc.add_table(rows=7, cols=4)
+    # Basic Original Table Grid: plain black borders, no background shading
+    summary_tbl = doc.add_table(rows=7, cols=4, style='Table Grid')
     summary_tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
     summary_tbl.autofit = False
-    set_clean_table_borders(summary_tbl, color="CCCCCC")
 
     s_widths = [Inches(1.0), Inches(1.4), Inches(2.7), Inches(1.4)]
     headers = ["Stage", "Input", "What It Does", "Output"]
     for idx, h_text in enumerate(headers):
         cell = summary_tbl.cell(0, idx)
         cell.width = s_widths[idx]
-        set_cell_background(cell, "E5E7EB")
         set_cell_margins(cell, top=70, bottom=70, left=80, right=80)
         p = cell.paragraphs[0]
         p.paragraph_format.space_after = Pt(0)
         r = p.add_run(h_text)
         r.bold = True
         r.font.name = FONT_FAMILY
-        r.font.size = Pt(9)
+        r.font.size = Pt(9.5)
         r.font.color.rgb = UNIFORM_COLOR
 
     tbl_rows_data = [
@@ -376,17 +311,15 @@ def generate_simple_docx(output_path):
         ("6. Solve", "Context + Query", "Drafts grounded 5-part troubleshooting instructions citing source documents.", "Customer-ready solution")
     ]
     for r_idx, row_data in enumerate(tbl_rows_data, start=1):
-        bg = "F9FAFB" if r_idx % 2 == 1 else "FFFFFF"
         for c_idx, cell_value in enumerate(row_data):
             cell = summary_tbl.cell(r_idx, c_idx)
             cell.width = s_widths[c_idx]
-            set_cell_background(cell, bg)
             set_cell_margins(cell, top=50, bottom=50, left=80, right=80)
             p = cell.paragraphs[0]
             p.paragraph_format.space_after = Pt(0)
             r = p.add_run(cell_value)
             r.font.name = FONT_FAMILY
-            r.font.size = Pt(8.5)
+            r.font.size = Pt(9)
             r.font.color.rgb = UNIFORM_COLOR
             if c_idx == 0:
                 r.bold = True
@@ -496,7 +429,7 @@ def generate_simple_docx(output_path):
 
     # Save to target output
     doc.save(output_path)
-    print(f"Generated clean docx successfully at: {output_path}")
+    print(f"Generated clean docx with basic Table Grid successfully at: {output_path}")
 
 if __name__ == "__main__":
     out_file = "/home/quan/projects/maivenpoint/AI/ChatbotOCR/SOLUTION_BRIEF.docx"
