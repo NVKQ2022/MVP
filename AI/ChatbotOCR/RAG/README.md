@@ -1,6 +1,6 @@
 # 🤖 RAG (Retrieval-Augmented Generation) Subsystem
 
-This module powers knowledge base retrieval and grounded support answer generation using the [`PolyRAG`](https://github.com/NVKQ2022/PolyRAG) (v0.1.5) engine centered on the `NaiveRAG` pipeline.
+This module powers knowledge base retrieval and grounded support answer generation using the [`PolyRAG`](https://github.com/NVKQ2022/PolyRAG) (v0.2.0) engine centered on the `NaiveRAG` pipeline with LangChain-native Milvus Lite storage.
 
 ---
 

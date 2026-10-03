@@ -1,4 +1,4 @@
-"""PolyRAG Engine: Integrates polyrag 0.1.5 NaiveRAG with Milvus Lite vector store."""
+"""PolyRAG Engine: Integrates polyrag 0.2.0 NaiveRAG with Milvus Lite vector store."""
 
 import logging
 from pathlib import Path
@@ -7,28 +7,65 @@ from typing import Any
 from polyrag import (
     NaiveRAG,
     RecursiveCharacterChunker,
-    SentenceTransformerEmbedding,
-    MilvusLiteVectorStore,
-    ChromaVectorStore,
     InMemoryVectorStore,
-    OpenAILLM,
     RAGResponse,
 )
-from polyrag.core.interfaces import BaseVectorStore, BaseLLMClient
+from polyrag.embeddings import resolve_embedding_model
+from polyrag.llms import resolve_llm_client
+from polyrag.vector_stores import resolve_vector_store
+from langchain_milvus import Milvus
 
 from RAG.config import rag_settings
 
 logger = logging.getLogger(__name__)
 
 
+class MilvusLiteVectorStore(Milvus):
+    """LangChain Milvus vector store tailored for Milvus Lite in PolyRAG."""
+
+    def count(self) -> int:
+        """Return total indexed records in the active collection."""
+        try:
+            if hasattr(self, "client") and self.client and hasattr(self, "collection_name"):
+                if self.client.has_collection(collection_name=self.collection_name):
+                    stats = self.client.get_collection_stats(collection_name=self.collection_name)
+                    return int(stats.get("row_count", 0))
+        except Exception:
+            pass
+        return 0
+
+    def clear(self) -> None:
+        """Drop collection to cleanly reset vector storage."""
+        try:
+            if hasattr(self, "client") and self.client and hasattr(self, "collection_name"):
+                if self.client.has_collection(collection_name=self.collection_name):
+                    self.client.drop_collection(collection_name=self.collection_name)
+        except Exception:
+            pass
+
+    def peek(self, limit: int = 5) -> list[dict[str, Any]]:
+        """Preview sample records from the vector collection."""
+        try:
+            if hasattr(self, "client") and self.client and hasattr(self, "collection_name"):
+                if self.client.has_collection(collection_name=self.collection_name):
+                    return self.client.query(
+                        collection_name=self.collection_name,
+                        filter="",
+                        limit=limit,
+                    )
+        except Exception:
+            pass
+        return []
+
+
 class RAGEngine:
     """
-    RAG Engine powered by PolyRAG 0.1.5 NaiveRAG pipeline.
+    RAG Engine powered by PolyRAG 0.2.0 NaiveRAG pipeline.
     
     Coordinates:
     - Text document ingestion from data/kb_documents/
     - Milvus Lite embedded vector store (with ChromaDB & InMemory fallback)
-    - Semantic dense embedding search (SentenceTransformers / OpenAI)
+    - Semantic dense embedding search (HuggingFace / OpenAI via LangChain)
     - Grounded 1-shot support answer generation using NaiveRAG
     """
 
@@ -63,53 +100,53 @@ class RAGEngine:
             chunk_overlap=rag_settings.chunk_overlap,
         )
 
-        # 2. Initialize Embeddings (OpenAI or Local Sentence Transformers)
+        # 2. Initialize Embeddings via PolyRAG 0.2.0 resolver
         if self.embedding_model_name.startswith("text-embedding") and rag_settings.openai_api_key:
-            from polyrag import OpenAIEmbedding
-            logger.info(f"Initializing OpenAIEmbedding with model: {self.embedding_model_name}")
-            self.embedding_model = OpenAIEmbedding(
-                model_name=self.embedding_model_name,
-                base_url=rag_settings.openai_base_url,
-                api_key=rag_settings.openai_api_key,
+            from langchain_openai import OpenAIEmbeddings
+            logger.info(f"Initializing OpenAIEmbeddings with model: {self.embedding_model_name}")
+            self.embedding_model = OpenAIEmbeddings(
+                model=self.embedding_model_name,
+                openai_api_key=rag_settings.openai_api_key,
+                openai_api_base=rag_settings.openai_base_url,
             )
         else:
-            logger.info(f"Initializing SentenceTransformerEmbedding with model: {self.embedding_model_name}")
-            self.embedding_model = SentenceTransformerEmbedding(model_name=self.embedding_model_name)
+            logger.info(f"Resolving embedding model with PolyRAG: {self.embedding_model_name}")
+            self.embedding_model = resolve_embedding_model(self.embedding_model_name)
 
         # 3. Initialize Vector Store (Milvus Lite default, ChromaDB or InMemory)
         if use_in_memory:
             logger.info("Using InMemoryVectorStore")
-            self.vector_store: BaseVectorStore = InMemoryVectorStore()
+            self.vector_store = InMemoryVectorStore(embedding=self.embedding_model)
         elif self.vector_store_type in ("chroma", "chromadb"):
-            logger.info(f"Initializing ChromaVectorStore (dir={self.db_path}, collection={self.collection_name})")
-            Path(self.db_path).mkdir(parents=True, exist_ok=True)
-            self.vector_store = ChromaVectorStore(
+            logger.info(f"Initializing Chroma VectorStore (dir={self.db_path}, collection={self.collection_name})")
+            self.vector_store = resolve_vector_store(
+                "chroma",
                 persist_directory=self.db_path,
                 collection_name=self.collection_name,
+                embedding=self.embedding_model,
             )
         else:
             logger.info(f"Initializing MilvusLiteVectorStore (db_path={self.db_path}, collection={self.collection_name})")
-            emb_dim = getattr(self.embedding_model, "dim", None)
             self.vector_store = MilvusLiteVectorStore(
-                db_path=self.db_path,
+                embedding_function=self.embedding_model,
+                connection_args={"uri": self.db_path},
                 collection_name=self.collection_name,
-                dimension=emb_dim,
+                auto_id=True,
             )
-            self._ensure_milvus_loaded()
 
-        # 4. Initialize LLM Client
-        self.llm_client: BaseLLMClient | None = None
+        # 4. Initialize LLM Client via PolyRAG 0.2.0 resolver
+        self.llm_client = None
         if rag_settings.openai_api_key:
-            logger.info(f"Initializing OpenAILLM with model: {self.model_name}")
-            self.llm_client = OpenAILLM(
+            logger.info(f"Initializing LLM client with model: {self.model_name}")
+            self.llm_client = resolve_llm_client(
                 model_name=self.model_name,
-                base_url=rag_settings.openai_base_url,
                 api_key=rag_settings.openai_api_key,
+                base_url=rag_settings.openai_base_url,
             )
         else:
             logger.warning("No OPENAI_API_KEY found. RAG generation will run in retrieval-only mode.")
 
-        # 5. Initialize NaiveRAG Pipeline (PolyRAG 0.1.5)
+        # 5. Initialize NaiveRAG Pipeline (PolyRAG 0.2.0)
         self.naive_rag = NaiveRAG(
             chunker=self.chunker,
             embedding_model=self.embedding_model,
@@ -117,20 +154,11 @@ class RAGEngine:
             llm_client=self.llm_client,
         )
 
-    def _ensure_milvus_loaded(self) -> None:
-        """Ensure collection is loaded into memory if using Milvus / Milvus Lite."""
-        if hasattr(self.vector_store, "client") and hasattr(self.vector_store, "collection_name"):
-            try:
-                client = self.vector_store.client
-                col_name = self.vector_store.collection_name
-                if client.has_collection(collection_name=col_name):
-                    load_state = client.get_load_state(collection_name=col_name)
-                    state_val = str(load_state.get("state", ""))
-                    if "loaded" not in state_val.lower():
-                        client.load_collection(collection_name=col_name)
-                        logger.debug(f"Loaded Milvus collection '{col_name}' into memory.")
-            except Exception as e:
-                logger.warning(f"Could not verify/load Milvus collection state: {e}")
+    def count(self) -> int:
+        """Return total document count in the active vector collection."""
+        if hasattr(self.vector_store, "count"):
+            return self.vector_store.count()
+        return 0
 
     def ingest_kb_documents(
         self,
@@ -178,13 +206,11 @@ class RAGEngine:
 
     def search(self, query: str, top_k: int | None = None) -> list[dict[str, Any]]:
         """Perform semantic vector search over the ingested knowledge base."""
-        self._ensure_milvus_loaded()
         k = top_k or rag_settings.top_k
         return self.naive_rag.retrieve(query=query, top_k=k)
 
     def query_naive(self, question: str, top_k: int | None = None) -> RAGResponse:
-        """Run standard Naive retrieve-then-read RAG pipeline using PolyRAG 0.1.5 NaiveRAG."""
-        self._ensure_milvus_loaded()
+        """Run standard Naive retrieve-then-read RAG pipeline using PolyRAG 0.2.0 NaiveRAG."""
         k = top_k or rag_settings.top_k
         return self.naive_rag.execute(question=question, top_k=k)
 

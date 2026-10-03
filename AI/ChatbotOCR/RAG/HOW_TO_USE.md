@@ -1,9 +1,9 @@
 # PolyRAG — How To Use
 
-> **Package**: `polyrag==0.1.5`
+> **Package**: `polyrag==0.2.0`
 > **Install**: `pip install git+https://github.com/NVKQ2022/PolyRAG.git`
-> **Only dependency**: `pydantic>=2.0.0` (everything else is optional based on what you use)
-> **Vector Store Support**: ChromaDB (persistent) + InMemory (transient) + Milvus / Milvus Lite (v0.1.5+).
+> **Foundation**: Built natively on `langchain-core` and `langchain-text-splitters` primitives.
+> **Vector Store Support**: Native LangChain VectorStores (Milvus Lite via `langchain-milvus`, Chroma via `langchain-chroma`, and built-in `InMemoryVectorStore`).
 
 ---
 
