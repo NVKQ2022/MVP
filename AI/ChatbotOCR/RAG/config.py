@@ -30,7 +30,7 @@ class RAGSettings(BaseModel):
 
     # Embedding Settings
     embedding_model: str = Field(
-        default_factory=lambda: os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+        default_factory=lambda: os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     )
 
     # Vector Store Settings

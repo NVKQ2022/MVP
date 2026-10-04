@@ -18,10 +18,11 @@ pillow>=10.0.0
 # RAG & NLP Subsystem
 polyrag @ git+https://github.com/NVKQ2022/PolyRAG.git
 langchain-milvus>=0.4.0
-langchain-huggingface>=1.2.0
+# Local embedding packages (commented out in favor of OpenAI text-embedding-3-small)
+# langchain-huggingface>=1.2.0
+# sentence-transformers>=3.0.0
 langchain-openai>=1.6.0
 pymilvus[milvus_lite]>=3.0.0
-sentence-transformers>=3.0.0
 openai>=1.30.0
 
 # Testing

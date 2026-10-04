@@ -36,7 +36,7 @@ Extracted OCR Issue (Error Code / Symptoms)
                     │
                     ▼
      PolyRAG Embeddings Resolver
-       (all-MiniLM-L6-v2 / 384-d)
+    (text-embedding-3-small / 1536-d)
                     │
                     ▼
      PolyRAG MilvusLiteVectorStore
@@ -62,8 +62,8 @@ Extracted OCR Issue (Error Code / Symptoms)
 - **Zero-infrastructure deployment**: requires no Docker containers or standalone servers for local execution, while maintaining 100% API compatibility with distributed enterprise Milvus clusters.
 
 ### 3.2 Embedding Model Resolver (`resolve_embedding_model`)
-- Uses PolyRAG's dynamic resolver to initialize `sentence-transformers/all-MiniLM-L6-v2` (384-dimensional dense vectors via `HuggingFaceEmbeddings`).
-- Automatically supports OpenAI embedding models (`text-embedding-3-small`) when API credentials are provided.
+- Uses OpenAI's `text-embedding-3-small` (1536-dimensional dense vectors via `OpenAIEmbeddings`) connected directly to Azure OpenAI / OpenAI.
+- Eliminates heavy local machine-learning packages (`sentence-transformers`, `torch`), reducing build size, memory footprint, and startup latency.
 
 ### 3.3 Structural Text Chunker (`RecursiveCharacterChunker`)
 - Subclasses LangChain's `RecursiveCharacterTextSplitter`.

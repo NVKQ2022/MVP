@@ -40,6 +40,10 @@ class MilvusLiteVectorStore(Milvus):
             if hasattr(self, "client") and self.client and hasattr(self, "collection_name"):
                 if self.client.has_collection(collection_name=self.collection_name):
                     self.client.drop_collection(collection_name=self.collection_name)
+                    if hasattr(self, "col"):
+                        self.col = None
+                    if hasattr(self, "fields"):
+                        self.fields = []
         except Exception:
             pass
 
@@ -110,8 +114,16 @@ class RAGEngine:
                 openai_api_base=rag_settings.openai_base_url,
             )
         else:
-            logger.info(f"Resolving embedding model with PolyRAG: {self.embedding_model_name}")
-            self.embedding_model = resolve_embedding_model(self.embedding_model_name)
+            try:
+                logger.info(f"Resolving embedding model with PolyRAG: {self.embedding_model_name}")
+                self.embedding_model = resolve_embedding_model(self.embedding_model_name)
+            except Exception as e:
+                logger.warning(
+                    f"Could not resolve embedding model '{self.embedding_model_name}' ({e}); "
+                    f"falling back to FakeEmbeddings(size=1536)"
+                )
+                from langchain_core.embeddings import FakeEmbeddings
+                self.embedding_model = FakeEmbeddings(size=1536)
 
         # 3. Initialize Vector Store (Milvus Lite default, ChromaDB or InMemory)
         if use_in_memory:

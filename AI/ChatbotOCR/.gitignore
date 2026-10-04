@@ -41,5 +41,5 @@ data/milvus_lite.db/
 # OS and Office lock files
 .DS_Store
 Thumbs.db
-~$*.docx
-
+# Archives
+*.zip

@@ -247,7 +247,7 @@ def generate_simple_docx(output_path):
 
     add_heading_2(doc, "Step 4: Vector Knowledge Retrieval from Milvus Lite")
     add_body_paragraph(doc,
-        "The sanitized diagnostic summary is converted into a vector embedding using a dense embedding model (all-MiniLM-L6-v2). "
+        "The sanitized diagnostic summary is converted into a vector embedding using OpenAI's dense embedding model (text-embedding-3-small). "
         "The system then searches against Milvus Lite, an embedded local vector database containing 12 pre-loaded enterprise support articles "
         "(covering authentication, database connection issues, network timeouts, storage limits, and server errors).")
     add_body_paragraph(doc,
@@ -372,7 +372,7 @@ def generate_simple_docx(output_path):
     add_body_paragraph(doc, "4. Configure environment variables (.env file):")
     add_body_paragraph(doc,
         "Create the local environment configuration file by copying .env.example to .env:")
-    add_code_snippet(doc, "cp .env.example .env\n# Edit .env with your environment keys:\nOPENAI_API_KEY=\"your-api-key\"\nOPENAI_BASE_URL=\"https://your-resource.openai.azure.com/openai/v1\"\nMODEL_NAME=\"gpt-4o-mini\"\nEMBEDDING_MODEL=\"all-MiniLM-L6-v2\"\nVECTOR_STORE_TYPE=\"milvus_lite\"\nMILVUS_DB_PATH=\"./data/milvus_lite.db\"")
+    add_code_snippet(doc, "cp .env.example .env\n# Edit .env with your environment keys:\nOPENAI_API_KEY=\"your-api-key\"\nOPENAI_BASE_URL=\"https://your-resource.openai.azure.com/openai/v1\"\nMODEL_NAME=\"gpt-4o-mini\"\nEMBEDDING_MODEL=\"text-embedding-3-small\"\nVECTOR_STORE_TYPE=\"milvus_lite\"\nMILVUS_DB_PATH=\"./data/milvus_lite.db\"")
 
     add_body_paragraph(doc, "5. (Optional) Ingest or Re-index the Knowledge Base:")
     add_body_paragraph(doc,
