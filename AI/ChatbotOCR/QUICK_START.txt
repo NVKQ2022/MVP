@@ -1,0 +1,40 @@
+========================================================================
+🤖 SUPPORT SCREENSHOT CHATBOT — QUICK START INSTRUCTIONS
+========================================================================
+
+1. EASIEST WAY TO RUN (ONE-CLICK LAUNCHER):
+------------------------------------------------------------------------
+- On Linux / macOS:
+    ./run.sh
+
+- On Windows:
+    Double-click `run.bat` (or execute `run.bat` in Command Prompt)
+
+Once started, open your browser:
+    👉 Web Chat UI:       http://localhost:8000
+    👉 API Documentation: http://localhost:8000/docs
+
+
+2. MANUAL SETUP & EXECUTION:
+------------------------------------------------------------------------
+Step 1: Create & activate virtual environment (Python 3.10+ / 3.12):
+    python3 -m venv venv
+    source venv/bin/activate       (On Windows: venv\Scripts\activate)
+
+Step 2: Install dependencies:
+    pip install -r requirements.txt
+
+Step 3: Verify environment configuration:
+    A pre-configured `.env` is already provided.
+    (Template available at `.env.example`).
+
+Step 4: Launch Web Server:
+    python main.py
+    (Or: python main.py server --host 0.0.0.0 --port 8000)
+
+Step 5: Run Terminal Diagnosis directly (CLI):
+    python main.py diagnose data/sample_screenshots/kb-auth-001__01__clean_light.png
+
+Step 6: Run Automated Tests:
+    pytest
+========================================================================
