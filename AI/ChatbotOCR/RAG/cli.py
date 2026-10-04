@@ -80,6 +80,9 @@ def main() -> None:
             print(f"  • {src}#{cid} — {title}")
         print(f"⏱ Latency: {res.took_ms}ms | Confidence: {res.confidence}\n")
 
+    if args.ingest and not args.query and not args.interactive:
+        return
+
     if args.interactive or not args.query:
         print("=" * 60)
         print("💬 PolyRAG Interactive Support Terminal (Type 'exit' to quit)")

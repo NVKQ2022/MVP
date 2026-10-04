@@ -92,6 +92,11 @@ def main() -> None:
     rag_parser.add_argument("-k", "--top-k", type=int, default=2)
     rag_parser.add_argument("-v", "--verbose", action="store_true", help="Verbose reasoning output")
 
+    # 5. Ingest Subcommand (Knowledge Base Ingestion)
+    ingest_parser = subparsers.add_parser("ingest", help="Ingest or rebuild documents from data/kb_documents/ into Milvus Lite")
+    ingest_parser.add_argument("--docs-dir", type=str, default="data/kb_documents", help="Directory containing KB markdown documents (default: data/kb_documents)")
+    ingest_parser.add_argument("--force", action="store_true", help="Clear existing records and force full re-ingestion")
+
     args = parser.parse_args()
 
     # Default to server if no arguments passed
@@ -123,6 +128,14 @@ def main() -> None:
         if args.verbose:
             sys.argv.append("-v")
         rag_main()
+
+    elif args.command == "ingest":
+        from RAG.services.rag_engine import RAGEngine
+        print("🔧 Initializing PolyRAG Engine...")
+        engine = RAGEngine()
+        print(f"📥 Ingesting knowledge documents from '{args.docs_dir}' into {engine.vector_store_type} vector store...")
+        count = engine.ingest_kb_documents(docs_dir=args.docs_dir, force_regenerate=args.force)
+        print(f"✅ Ingestion complete! {count} chunks indexed in Milvus Lite (Total records in DB: {engine.vector_store.count()}).")
 
 
 if __name__ == "__main__":

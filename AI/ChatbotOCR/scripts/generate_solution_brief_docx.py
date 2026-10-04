@@ -374,6 +374,11 @@ def generate_simple_docx(output_path):
         "Create the local environment configuration file by copying .env.example to .env:")
     add_code_snippet(doc, "cp .env.example .env\n# Edit .env with your environment keys:\nOPENAI_API_KEY=\"your-api-key\"\nOPENAI_BASE_URL=\"https://your-resource.openai.azure.com/openai/v1\"\nMODEL_NAME=\"gpt-4o-mini\"\nEMBEDDING_MODEL=\"all-MiniLM-L6-v2\"\nVECTOR_STORE_TYPE=\"milvus_lite\"\nMILVUS_DB_PATH=\"./data/milvus_lite.db\"")
 
+    add_body_paragraph(doc, "5. (Optional) Ingest or Re-index the Knowledge Base:")
+    add_body_paragraph(doc,
+        "The database is already pre-indexed in data/milvus_lite.db and automatically self-heals if empty. To manually re-index documents from data/kb_documents/:")
+    add_code_snippet(doc, "python main.py ingest\n# Or to clear existing records and rebuild from scratch:\npython main.py ingest --force")
+
     add_heading_2(doc, "5.2 Starting the Web Chat Application")
     add_body_paragraph(doc, "Launch the application using the root runner:")
     add_code_snippet(doc, "python main.py\n# Or explicitly: python main.py server --host 0.0.0.0 --port 8000")
