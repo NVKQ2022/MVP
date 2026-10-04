@@ -371,8 +371,8 @@ def generate_simple_docx(output_path):
 
     add_body_paragraph(doc, "4. Configure environment variables (.env file):")
     add_body_paragraph(doc,
-        "Copy .env.example to .env and provide your Azure OpenAI credentials (API key, endpoint, model deployment name):")
-    add_code_snippet(doc, "cp .env.example .env\n# Edit .env with your AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT")
+        "Copy .env.example to .env and configure the required environment variables for the LLM and vector database:")
+    add_code_snippet(doc, "cp .env.example .env\n# Configure the required keys in .env:\n# OPENAI_API_KEY=\"your-api-key\"\n# OPENAI_BASE_URL=\"https://your-resource.openai.azure.com/openai/v1\"\n# MODEL_NAME=\"gpt-4o-mini\"\n# VECTOR_STORE_TYPE=\"milvus_lite\"\n# MILVUS_DB_PATH=\"./data/milvus_lite.db\"")
 
     add_heading_2(doc, "5.2 Starting the Web Chat Application")
     add_body_paragraph(doc, "Launch the application using the root runner:")

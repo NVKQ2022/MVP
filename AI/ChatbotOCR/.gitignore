@@ -38,6 +38,8 @@ data/milvus_lite.db/
 *.db
 *.db/
 
-# OS files
+# OS and Office lock files
 .DS_Store
 Thumbs.db
+~$*.docx
+
