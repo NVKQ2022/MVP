@@ -2,20 +2,7 @@
 🤖 SUPPORT SCREENSHOT CHATBOT — QUICK START INSTRUCTIONS
 ========================================================================
 
-1. EASIEST WAY TO RUN (ONE-CLICK LAUNCHER):
-------------------------------------------------------------------------
-- On Linux / macOS:
-    ./run.sh
-
-- On Windows:
-    Double-click `run.bat` (or execute `run.bat` in Command Prompt)
-
-Once started, open your browser:
-    👉 Web Chat UI:       http://localhost:8000
-    👉 API Documentation: http://localhost:8000/docs
-
-
-2. MANUAL SETUP & EXECUTION:
+1. SETUP (ONE-TIME):
 ------------------------------------------------------------------------
 Step 1: Create & activate virtual environment (Python 3.10+ / 3.12):
     python3 -m venv venv
@@ -28,18 +15,28 @@ Step 3: Verify environment configuration:
     A pre-configured `.env` is already provided.
     (Template available at `.env.example`).
 
-Step 4: (Optional) Ingest or Rebuild Knowledge Base:
+
+2. RUNNING THE PROJECT:
+------------------------------------------------------------------------
+Launch Web Server:
+    python main.py
+    (Or explicitly: python main.py server --host 0.0.0.0 --port 8000)
+
+Once started, open your browser:
+    👉 Web Chat UI:       http://localhost:8000
+    👉 API Documentation: http://localhost:8000/docs
+
+
+3. OPTIONAL UTILITIES & TESTING:
+------------------------------------------------------------------------
+Ingest or Rebuild Knowledge Base:
     python main.py ingest
-    # Use --force to wipe and re-index from scratch:
+    # Use --force to clear and re-index from scratch:
     # python main.py ingest --force
 
-Step 5: Launch Web Server:
-    python main.py
-    (Or: python main.py server --host 0.0.0.0 --port 8000)
-
-Step 6: Run Terminal Diagnosis directly (CLI):
+Run Terminal Diagnosis directly (CLI):
     python main.py diagnose data/sample_screenshots/kb-auth-001__01__clean_light.png
 
-Step 7: Run Automated Tests:
+Run Automated Tests:
     pytest
 ========================================================================
