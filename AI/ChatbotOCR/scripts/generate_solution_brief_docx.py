@@ -353,64 +353,8 @@ def generate_simple_docx(output_path):
         bold_prefix="High Speed & Low Cost: "
     )
 
-    # ==================== SECTION 5: HOW TO RUN THIS PROJECT ====================
-    add_heading_1(doc, "5. How to Run This Project")
-
-    add_body_paragraph(doc,
-        "The project is packaged with a unified CLI entrypoint (main.py) and a FastAPI web server, enabling straightforward setup and execution.")
-
-    add_heading_2(doc, "5.1 Prerequisites & Environment Setup")
-    add_body_paragraph(doc, "1. Clone the repository and enter the project directory:")
-    add_code_snippet(doc, "git clone https://github.com/NVKQ2022/MVP.git\ncd MVP/AI/ChatbotOCR")
-
-    add_body_paragraph(doc, "2. Create and activate a Python virtual environment (Python 3.10+ or 3.12):")
-    add_code_snippet(doc, "python3 -m venv venv\nsource venv/bin/activate    # On Windows: venv\\Scripts\\activate")
-
-    add_body_paragraph(doc, "3. Install the project dependencies:")
-    add_code_snippet(doc, "pip install -r requirements.txt")
-
-    add_body_paragraph(doc, "4. Configure environment variables (.env file):")
-    add_body_paragraph(doc,
-        "Create the local environment configuration file by copying .env.example to .env:")
-    add_code_snippet(doc, "cp .env.example .env\n# Edit .env with your environment keys:\nOPENAI_API_KEY=\"your-api-key\"\nOPENAI_BASE_URL=\"https://your-resource.openai.azure.com/openai/v1\"\nMODEL_NAME=\"gpt-4o-mini\"\nEMBEDDING_MODEL=\"text-embedding-3-small\"\nVECTOR_STORE_TYPE=\"milvus_lite\"\nMILVUS_DB_PATH=\"./data/milvus_lite.db\"")
-
-    add_body_paragraph(doc, "5. (Optional) Ingest or Re-index the Knowledge Base:")
-    add_body_paragraph(doc,
-        "The database is already pre-indexed in data/milvus_lite.db and automatically self-heals if empty. To manually re-index documents from data/kb_documents/:")
-    add_code_snippet(doc, "python main.py ingest\n# Or to clear existing records and rebuild from scratch:\npython main.py ingest --force")
-
-    add_heading_2(doc, "5.2 Starting the Web Chat Application")
-    add_body_paragraph(doc, "Launch the application using the root runner:")
-    add_code_snippet(doc, "python main.py\n# Or explicitly: python main.py server --host 0.0.0.0 --port 8000")
-
-    add_body_paragraph(doc, "Once started, open your web browser to:")
-    add_bullet_item(doc, "http://localhost:8000 — Interactive single-page support chatbot UI with drag-and-drop screenshot upload.", bold_prefix="Web Chat Interface: ")
-    add_bullet_item(doc, "http://localhost:8000/docs — Interactive OpenAPI / Swagger documentation for testing REST endpoints directly.", bold_prefix="API Documentation: ")
-
-    add_heading_2(doc, "5.3 Running End-to-End Terminal Diagnosis (CLI)")
-    add_body_paragraph(doc,
-        "You can diagnose an error screenshot directly from the terminal without opening a browser:")
-    add_code_snippet(doc, "python main.py diagnose data/sample_screenshots/kb-auth-001__01__clean_light.png")
-    add_body_paragraph(doc,
-        "This command executes the full pipeline in the terminal: extracts text using PaddleOCR, searches Milvus Lite, "
-        "and prints the grounded resolution along with latency and confidence metrics.")
-
-    add_heading_2(doc, "5.4 Standalone OCR and RAG Commands")
-    add_bullet_item(doc, "Run OCR on any image and optionally save annotated visual boxes:", bold_prefix="Standalone OCR: ")
-    add_code_snippet(doc, "python main.py ocr demo_output/sample_invoice.jpg --save-annotated demo_output/result.jpg")
-
-    add_bullet_item(doc, "Ask questions directly against the technical knowledge base:", bold_prefix="Standalone Knowledge Query: ")
-    add_code_snippet(doc, 'python main.py rag -q "How do I fix authentication token expired error?"')
-
-    add_heading_2(doc, "5.5 Running the Automated Test Suite")
-    add_body_paragraph(doc, "Run all unit and integration tests across the OCR, RAG, and Server subsystems:")
-    add_code_snippet(doc, "pytest")
-
-    add_body_paragraph(doc, "Run the end-to-end knowledge base pipeline test verifying all 12 support scenarios:")
-    add_code_snippet(doc, "python RAG/test_rag_pipeline.py")
-
-    # ==================== SECTION 6: VERIFICATION ====================
-    add_heading_1(doc, "6. Verification & Robustness Results")
+    # ==================== SECTION 5: VERIFICATION ====================
+    add_heading_1(doc, "5. Verification & Robustness Results")
 
     add_body_paragraph(doc,
         "The end-to-end pipeline was validated through automated tests covering all functional and edge-case requirements:")

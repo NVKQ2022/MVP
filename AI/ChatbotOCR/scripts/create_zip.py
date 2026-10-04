@@ -18,6 +18,7 @@ WIN_DOWNLOADS_ZIP = Path("/mnt/c/Users/quan/Downloads") / ZIP_NAME
 
 EXCLUDE_DIRS = {"venv", ".venv", ".git", ".pytest_cache", "__pycache__"}
 EXCLUDE_EXTS = {".pyc", ".pyo"}
+EXCLUDE_FILES = {"REQUIREMENT.md"}
 
 def create_project_zip() -> None:
     print(f"📦 Packaging '{ROOT_DIR.name}' from {ROOT_DIR}...")
@@ -29,7 +30,12 @@ def create_project_zip() -> None:
             
             for file in sorted(files):
                 file_path = Path(root) / file
-                if file.startswith("~$") or file == ".DS_Store" or file_path.suffix in EXCLUDE_EXTS:
+                if (
+                    file in EXCLUDE_FILES
+                    or file.startswith("~$")
+                    or file == ".DS_Store"
+                    or file_path.suffix in EXCLUDE_EXTS
+                ):
                     continue
                 arcname = Path("ChatbotOCR") / file_path.relative_to(ROOT_DIR)
                 zipf.write(file_path, arcname)
